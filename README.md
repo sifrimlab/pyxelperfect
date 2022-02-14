@@ -1,6 +1,6 @@
 # Pyxelpefect: Bioinformatic image-processing in pure Python
 
-*github:* <github.com/sifrimlab/pyxelperfect> 
+*Github:* <http://github.com/sifrimlab/pyxelperfect> 
 
 *Author*: david.wouters@kuleuven.be
 
