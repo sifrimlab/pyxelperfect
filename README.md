@@ -1,0 +1,28 @@
+# Pyxelpefect: Bioinformatic image-processing in pure Python
+
+*github:* <github.com/sifrimlab/pyxelperfect> 
+
+*Author*: david.wouters@kuleuven.be
+
+## Description
+This repository represents a collection of useful functions that are used in all bioinformatic image processing performed by the sifrimlab. It's divided into different modules each with their own theme, and each modules hosts several standalone functions that can be useful in any application.
+
+
+## Setup/Installation
+
+This python package is available from pypi:
+
+```python
+pip install pyxelperfect
+```
+
+## Documentation
+**Under construction**
+
+## Citation
+If you use this repository or any of its modules for your analysis, please cite this github:
+```bibtex
+
+```
+
+
