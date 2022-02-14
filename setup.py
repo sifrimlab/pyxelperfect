@@ -40,6 +40,7 @@ setuptools.setup(
         "matplotlib",
         "Pillow",
         "tifffile",
+        "tabulate",
     ],
     classifiers = [
         "Development Status :: 3 - Alpha",
