@@ -22,7 +22,11 @@ pip install pyxelperfect
 ## Citation
 If you use this repository or any of its modules for your analysis, please cite this github:
 ```bibtex
-
+ @misc{wouters,
+ title={Sifrimlab/pyxelperfect: Collection of image-processing tools for bioinformatic applications},
+ url={https://github.com/sifrimlab/pyxelperfect},
+ journal={GitHub},
+ author={Wouters, David}} 
 ```
 
 
