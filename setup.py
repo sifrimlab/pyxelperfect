@@ -44,6 +44,7 @@ setuptools.setup(
         "stardist",
         "csbdeep",
         "tensorflow",
+        "SimpleITK",
     ],
     classifiers = [
         "Development Status :: 3 - Alpha",

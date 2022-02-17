@@ -18,3 +18,9 @@ def showSegmentation(labeled_image: np.array, original_image: np.array = None, s
         plt.imshow(colored_image_on_DAPI)
         plt.axis("off")
         plt.show()
+
+def showImage(image: np.array):
+    plt.imshow(image)
+    plt.axis("off")
+    plt.show()
+
