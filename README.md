@@ -3,6 +3,8 @@
 *Github:* <http://github.com/sifrimlab/pyxelperfect> 
 
 *Author*: david.wouters@kuleuven.be
+## Releases
+[![pypi package](https://img.shields.io/pypi/v/pyxelperfect.svg)](https://pypi.python.org/project/pyxelperfect/)
 
 ## Description
 This repository represents a collection of useful functions that are used in all bioinformatic image processing performed by the sifrimlab. It's divided into different modules each with their own theme, and each modules hosts several standalone functions that can be useful in any application.

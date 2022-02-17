@@ -41,6 +41,9 @@ setuptools.setup(
         "Pillow",
         "tifffile",
         "tabulate",
+        "stardist",
+        "csbdeep",
+        "tensorflow",
     ],
     classifiers = [
         "Development Status :: 3 - Alpha",

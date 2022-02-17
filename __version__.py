@@ -1,10 +1,10 @@
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 
 
 def is_pyxelperfect_version_compatible(version):
     """
     Checks if the provided **version** is the same major version
-    as the currently running version of augur.
+    as the currently running version of pyxelperfect.
     Parameters
     ----------
     version : str
