@@ -1,5 +1,7 @@
-from pathlib import Path
+import os
 import SimpleITK as sitk
+import matplotlib.pyplot as plt
+from skimage import io
 from icecream import ic
 
 def calculateTransform(fixed, moving):
@@ -53,8 +55,10 @@ def rigidRegister(ref_image_path: str, target_image_path: str):
 
     reformed_target = warpImage(target, transform)
 
-    out_name = Path(target_image_path).basename + "_registered.tiff"
-    writeOutOfSITK(reformed_target, )
+    out_name = os.path.splitext(target_image_path)[0]+ "_registered.tif"
+    writeOutOfSITK(reformed_target,out_name)
+
+    return reformed_target
 
 
 
@@ -63,8 +67,14 @@ def rigidRegister(ref_image_path: str, target_image_path: str):
 
 
 if __name__ == '__main__':
-    image1 =sitk.ReadImage("/home/david/Documents/communISS/data/merfish/merfish_4.tif", sitk.sitkFloat32)
-    image2 =sitk.ReadImage("/home/david/Documents/communISS/data/merfish/merfish_5.tif", sitk.sitkFloat32)
+    image1 = io.imread("/media/sda1/prostate_cancer/PWB 929 _ DLC1 - High Res.tif")
+    image2 = io.imread("/media/sda1/prostate_cancer/PWB929_normal_H&E_+cmc.tif")
 
-    rigidRegister(image1, image2)
+    # image = rigidRegister(image1, image2)
+    plt.imshow(image1)
+    
+    # fig, axs = plt.subplots(1,2)
+    # axs[0] = plt.imshow(image1)
+    # axs[1] = plt.imshow(image2)
+    plt.show()
 

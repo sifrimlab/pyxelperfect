@@ -1,7 +1,9 @@
 import cv2
+import numpy as np
+
 
 # Automatic brightness and contrast optimization with optional histogram clipping
-def automaticBrightnessAndContrast(image, clip_hist_percent=1):
+def automaticBrightnessAndContrast(image: np.array, clip_hist_percent: int =1):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
     # Calculate grayscale histogram
