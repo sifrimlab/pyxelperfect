@@ -41,6 +41,7 @@ setuptools.setup(
         "Pillow",
         "tifffile",
         "tabulate",
+        "nd2reader",
     ],
     classifiers = [
         "Development Status :: 3 - Alpha",

@@ -3,6 +3,7 @@ from skimage import io
 import numpy as np
 from typing import List, Tuple
 import aicspylibczi
+from nd2reader import ND2Reader
 
 # ap = argparse.ArgumentParser(description="Extract tif from an image and count neurons and ganglia.")
 # ap.add_argument('file_path',type=str,help="Path (relative or absolute) to target image")
@@ -57,14 +58,22 @@ def readImage(file_path: str) -> Tuple[np.array, str]:
     Tuple[np.array, str]
 
     """
-    if args_file_path.lower().endswith((".tif", ".tiff", "nd2")):
-        image = io.imread(args_file_path)
+    if file_path.lower().endswith((".tif", ".tiff", "nd2")):
+        image = io.imread(file_path)
         img_type = "tif"
-    if args_file_path.lower().endswith(".czi"):
-        image = aicspylibczi.CziFile(args_file_path) 
+        img_shape = image.shape
+        return image, img_type, img_shape
+    elif file_path.lower().endswith(".czi"):
+        image = aicspylibczi.CziFile(file_path) 
         img_type = "czi"
+        img_shape  = image.get_dims_shape()[0]
+        return image, img_type, img_shape
+    elif file_path.lower().endswith(".nd2"):
+        with ND2Reader(args.nd2_path) as images:
+            img_type = "nd2"
+            img_shape = images.sizes
+            return images, img_type, img_shape
         
-    return image, img_type
 
 
 def extractMostInFocusZstack(image: np.ndarray, z_shape_index:int = -1) -> np.ndarray:
@@ -127,3 +136,7 @@ def extractSingleImages(image: np.ndarray, indexes_dict: dict, image_type: str, 
                 io.imsave(f"{os.path.splitext(filename)[0]}_i{shape_index}_c{channel_index}.tif", extracted_image )
 
 # def parseIndexes() #TODO
+if __name__ == "__main__":
+    test_tuple =readImage("/media/tool/IBS_project/initial_imgs/1391_C109_40X_BSA5_3.czi")
+    print(test_tuple)
+
