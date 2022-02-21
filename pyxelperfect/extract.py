@@ -58,12 +58,11 @@ def readImage(file_path: str) -> Tuple[np.array, str]:
     Tuple[np.array, str]
 
     """
-    if file_path.lower().endswith((".tif", ".tiff", "nd2")):
+    if file_path.lower().endswith((".tif", ".tiff")):
         image = io.imread(file_path)
         img_type = "tif"
         img_shape = image.shape
-        return image, img_type, img_shape
-    elif file_path.lower().endswith(".czi"):
+    if file_path.lower().endswith(".czi"):
         image = aicspylibczi.CziFile(file_path) 
         img_type = "czi"
         img_shape  = image.get_dims_shape()[0]
@@ -136,7 +135,15 @@ def extractSingleImages(image: np.ndarray, indexes_dict: dict, image_type: str, 
                 io.imsave(f"{os.path.splitext(filename)[0]}_i{shape_index}_c{channel_index}.tif", extracted_image )
 
 # def parseIndexes() #TODO
+<<<<<<< HEAD
 if __name__ == "__main__":
     test_tuple =readImage("/media/tool/IBS_project/initial_imgs/1391_C109_40X_BSA5_3.czi")
     print(test_tuple)
 
+=======
+if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    image, shape =readImage("/media/sda1/prostate_cancer/PWB 929 _ DLC1 - High Res.tif")
+    plt.imshow(image)
+    plt.show()
+>>>>>>> a950e7f5e1884386da8b6cea29cdfc26c44e4d9d

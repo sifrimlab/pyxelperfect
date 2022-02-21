@@ -1,10 +1,15 @@
+from __future__ import print_function, unicode_literals, absolute_import, division
 import numpy as np
+import cv2
 from skimage import io
 from skimage.util import img_as_ubyte
 from skimage import color
 import matplotlib.pyplot as plt
 from skimage import measure
-import cv2
+from csbdeep.utils import Path, normalize
+from stardist.models import StarDist2D
+from display import showSegmentation
+from cellpose import models
 
 def otsuThreshold(image: np.array) -> float:
     """Use otsu's thresholding to find the optimal threshold divind the histogram of the image into 2 distributions.
@@ -117,14 +122,76 @@ def otsuSegment(img: np.array, tile_nr="") -> np.array :
     return label_image
 
 
+def stardistSegment(img: np.array, model:str = "2D_versatile_fluo") -> np.array:
+    """Segments cells using pretrained stardist models.
+
+    Parameters
+    ----------
+    img : np.array
+        image to be segmented
+    model : str
+        String representing which pretrained stardist model to load. Choose one of: (2D_versatile_fluo, 2D_versatile_he, 2D_paper_dsb2018)
+
+    Returns
+    -------
+    np.array
+
+    """
+    model_versatile = StarDist2D.from_pretrained(model)
+
+    # extract number of channels in case the input image is an RGB image
+    n_channel = 1 if img.ndim == 2 else img.shape[-1]
+    # depending on that, we want to normalize the channels independantly
+    axis_norm = (0,1)   # normalize channels independently
+    # axis_norm = (0,1,2) # normalize channels jointly
+
+    img_normalized = normalize(img, 1,99.8, axis=axis_norm)
+
+    labeled_image, details = model_versatile.predict_instances(img_normalized)
+    return labeled_image 
+
+def cellPoseSegment(img: np.array, model:str = "nuclei", channels: np.array = [0,0]) -> np.array:
+    """Segments cells using pretrained Cellpose models. Can do both cytoplasm and nuclei at the same time.
+
+    Parameters
+    ----------
+    img : np.array
+        img
+    model : str
+        String representing which model to use. Either 'nuclei', 'cyto'
+    channels : np.array
+        Array depicting which channel is either nucleus or DAPI, default = [0,0] -> grayscale for all images
+        How to indicate:
+
+        Grayscale=0, R=1, G=2, B=3
+        channels = [cytoplasm, nucleus]
+        if NUCLEUS channel does not exist, set the second channel to 0
+        IF ALL YOUR IMAGES ARE THE SAME TYPE, you can give a list with 2 elements
+        channels = [0,0] # IF YOU HAVE GRAYSCALE
+        channels = [2,3] # IF YOU HAVE G=cytoplasm and B=nucleus
+        channels = [2,1] # IF YOU HAVE G=cytoplasm and R=nucleus
+        If they have different orders -> make it a 2D array, e.g: 3 images:
+        channels = [[2,3], [1,2], [3,1]]
+
+    Returns
+    -------
+    np.array
+
+    """
+    # model_type='cyto' or model_type='nuclei'
+    model = models.Cellpose(gpu=False, model_type=model)
+    masks, flows, styles, diams = model.eval(img, diameter=None, channels=channels)
+    return masks
+    
+
 
 
 
 if __name__ == "__main__":
-    image_path = "/media/gojira/MERFISH_datasets/download.brainimagelibrary.org/02/26/02265ddb0dae51de/mouse1_sample2_raw/extracted_aligned_images/aligned_images_tile101_DAPI.tiff"
+    image_path = "/home/david/Documents/communISS/data/merfish/MERFISH_nuclei.TIFF"
     image = io.imread(image_path)
-    label_image = otsuSegment(image)
-    showSegmentation(label_image, plot=True)
+    label_image = cellPoseSegment(image)
+    showSegmentation(label_image, image, save=False, plot=True)
     # plt.imshow(label_image)
     # plt.show()
     # print(attribute_df)

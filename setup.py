@@ -42,6 +42,10 @@ setuptools.setup(
         "tifffile",
         "tabulate",
         "nd2reader",
+        "stardist",
+        "csbdeep",
+        "tensorflow",
+        "SimpleITK",
     ],
     classifiers = [
         "Development Status :: 3 - Alpha",
