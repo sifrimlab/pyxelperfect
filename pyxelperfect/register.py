@@ -39,42 +39,37 @@ def warpImage(image, transform: str or sitk.Transform) -> sitk.Image :
     resampled = sitk.Resample(image, transform, sitk.sitkLinear, 0.0, sitk.sitkUInt16)
     return resampled
 
-def readIntoSITK(file_path: str) -> sitk.Image:
-    image = sitk.ReadImage(file_path, sitk.sitkFloat32)
-    return image
-
-def writeOutOfSITK(image: sitk.Image, out_path: str):
-    sitk.WriteImage(image, out_path)
-
-def rigidRegister(ref_image_path: str, target_image_path: str):
-    ref = readIntoSITK(ref_image_path)
-    target = readIntoSITK(target_image_path)
+def rigidRegister(ref_image_path: str, target_image_path: str, out_name: str = ""):
+    ref = sitk.ReadImage(ref_image_path, sitk.sitkFloat32)
+    target = sitk.ReadImage(target_image_path, sitk.sitkFloat32)
 
 
     transform = calculateTransform(ref, target)
 
     reformed_target = warpImage(target, transform)
 
-    out_name = os.path.splitext(target_image_path)[0]+ "_registered.tif"
-    writeOutOfSITK(reformed_target,out_name)
+    if not out_name:
+        out_name = os.path.splitext(target_image_path)[0]+ "_registered.tif"
+    sitk.WriteImage(reformed_target, out_name)
 
     return reformed_target
 
 
 
-    
-
-
-
 if __name__ == '__main__':
-    image1 = io.imread("/media/sda1/prostate_cancer/PWB 929 _ DLC1 - High Res.tif")
-    image2 = io.imread("/media/sda1/prostate_cancer/PWB929_normal_H&E_+cmc.tif")
+    path_image1 = "/media/sdc1/prostate_cancer/PWB929_normal_H&E_+cmc.tif"
+    path_image2 = "/media/sdc1/prostate_cancer/PWB929_cancer_H&E_+cmc.tif"
 
-    # image = rigidRegister(image1, image2)
-    plt.imshow(image1)
+    image1 = io.imread(path_image1)
+    image2 = io.imread(path_image2)
+
+    # registered_image = rigidRegister(path_image1, path_image2)
+    # ic(image1.shape, image2.shape, registered_image.shape)
     
-    # fig, axs = plt.subplots(1,2)
-    # axs[0] = plt.imshow(image1)
-    # axs[1] = plt.imshow(image2)
+    registered_image = io.imread("/media/sdc1/prostate_cancer/PWB929_cancer_H&E_+cmc_registered.tif")
+    fig, axs = plt.subplots(1,3)
+    axs[0] = plt.imshow(image1)
+    axs[1] = plt.imshow(image2)
+    axs[2] = plt.imshow(registered_image)
     plt.show()
 

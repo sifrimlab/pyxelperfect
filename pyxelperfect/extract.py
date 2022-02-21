@@ -1,5 +1,6 @@
 import os
 from skimage import io
+from skimage.filters import laplace
 import numpy as np
 from typing import List, Tuple
 import aicspylibczi
@@ -19,7 +20,7 @@ from nd2reader import ND2Reader
 # if args.out_dir is None:
 #     args.out_dir = os.path.dirname(args.file_path)
 
-def getMostInFocusImage(image_array_list: List[np.array]) -> Tuple[np.array, int]:   
+def getMostInFocusImage(image_array_list: List[np.array]) -> Tuple[np.array, int]:  
     """Gets most in focus image and its index from a list of image-arrays.
 
     Parameters
@@ -32,13 +33,13 @@ def getMostInFocusImage(image_array_list: List[np.array]) -> Tuple[np.array, int
     Tuple[np.array, int]
 
     """
+    stdev_list = []
     for image in image_array_list:
         # calculate edges in image
         edged = laplace(image)
         # Calculate stdev of edges
         stdev = np.std(edged)
         stdev_list.append(stdev)
-    
     # Find largest stdev in list
     largest = max(stdev_list)
     # Fidn which index it is to link back to the original list
@@ -62,17 +63,17 @@ def readImage(file_path: str) -> Tuple[np.array, str]:
         image = io.imread(file_path)
         img_type = "tif"
         img_shape = image.shape
+        return image, img_type, img_shape
     if file_path.lower().endswith(".czi"):
-        image = aicspylibczi.CziFile(file_path) 
+        image = aicspylibczi.CziFile(file_path)
         img_type = "czi"
         img_shape  = image.get_dims_shape()[0]
         return image, img_type, img_shape
-    elif file_path.lower().endswith(".nd2"):
-        with ND2Reader(args.nd2_path) as images:
+    if file_path.lower().endswith(".nd2"):
+        with ND2Reader(file_path) as image:
             img_type = "nd2"
-            img_shape = images.sizes
-            return images, img_type, img_shape
-        
+            img_shape = image.sizes
+            return image, img_type, img_shape
 
 
 def extractMostInFocusZstack(image: np.ndarray, z_shape_index:int = -1) -> np.ndarray:
@@ -92,6 +93,7 @@ def extractMostInFocusZstack(image: np.ndarray, z_shape_index:int = -1) -> np.nd
     """
     if not len(image.shape) > 2:
         raise ValueError(f"Image shape expected to be larger than 2, image shape is {image.shape}")
+    img_list = []
     for i in range(image.shape[z_shape_index]):
         img_list.append(np.take(image, i, z_shape_index))
     mostInFocusImage = getMostInFocusImage(img_list)
@@ -134,16 +136,3 @@ def extractSingleImages(image: np.ndarray, indexes_dict: dict, image_type: str, 
                 extracted_image = extracted_image[0,0,0,0,0,:,:]
                 io.imsave(f"{os.path.splitext(filename)[0]}_i{shape_index}_c{channel_index}.tif", extracted_image )
 
-# def parseIndexes() #TODO
-<<<<<<< HEAD
-if __name__ == "__main__":
-    test_tuple =readImage("/media/tool/IBS_project/initial_imgs/1391_C109_40X_BSA5_3.czi")
-    print(test_tuple)
-
-=======
-if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    image, shape =readImage("/media/sda1/prostate_cancer/PWB 929 _ DLC1 - High Res.tif")
-    plt.imshow(image)
-    plt.show()
->>>>>>> a950e7f5e1884386da8b6cea29cdfc26c44e4d9d
