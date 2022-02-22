@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import SimpleITK as sitk
 import matplotlib.pyplot as plt
 from skimage import io
@@ -39,37 +40,44 @@ def warpImage(image, transform: str or sitk.Transform) -> sitk.Image :
     resampled = sitk.Resample(image, transform, sitk.sitkLinear, 0.0, sitk.sitkUInt16)
     return resampled
 
-def rigidRegister(ref_image_path: str, target_image_path: str, out_name: str = ""):
-    ref = sitk.ReadImage(ref_image_path, sitk.sitkFloat32)
-    target = sitk.ReadImage(target_image_path, sitk.sitkFloat32)
+def rigidRegister(ref_image: str or sitk.Image, target_image: str or sitk.Image, method="rigid",out_name: str = "") -> np.array:
 
+    if isinstance(ref_image, str):
+        ref = sitk.ReadImage(ref_image, sitk.sitkFloat32)
+    else:
+        ref = ref_image
+    if isinstance(target_image, str):
+        target = sitk.ReadImage(target_image, sitk.sitkFloat32)
+    else:
+        target = target_image
 
-    transform = calculateTransform(ref, target)
+    transform = affineRegister(ref, target)
 
     reformed_target = warpImage(target, transform)
 
-    if not out_name:
-        out_name = os.path.splitext(target_image_path)[0]+ "_registered.tif"
+    # if theres no out name but also no path of the target, we can't make an outname, so ti will not be saved
+    if not isinstance(target_image, str) and not out_name:
+        print("No out_name was given but target image is an image, so no output filepath can be generated. Registered image is not written to file.")
+        reformed_target = sitk.GetArrayFromImage(reformed_target)
+        return reformed_target
+    # if the target was a string, but no outname was given, we have to derive the out_name first
+    elif not out_name:
+        out_name = os.path.splitext(target_image)[0]+ "_registered.tif"
+
+    # finally we write the image and return it
     sitk.WriteImage(reformed_target, out_name)
 
+    reformed_target = sitk.GetArrayFromImage(reformed_target)
     return reformed_target
 
-
+def affineRegister(fixed, moving):
+    R = sitk.ImageRegistrationMethod()
+    R.SetMetricAsCorrelation()
+    R.SetOptimizerAsRegularStepGradientDescent(4.0, .01, 200)
+    R.SetInitialTransform(sitk.AffineTransform(fixed.GetDimension()))
+    R.SetInterpolator(sitk.sitkLinear)
+    outTx = R.Execute(fixed, moving)
+    return outTx
 
 if __name__ == '__main__':
-    path_image1 = "/media/sdc1/prostate_cancer/PWB929_normal_H&E_+cmc.tif"
-    path_image2 = "/media/sdc1/prostate_cancer/PWB929_cancer_H&E_+cmc.tif"
-
-    image1 = io.imread(path_image1)
-    image2 = io.imread(path_image2)
-
-    # registered_image = rigidRegister(path_image1, path_image2)
-    # ic(image1.shape, image2.shape, registered_image.shape)
-    
-    registered_image = io.imread("/media/sdc1/prostate_cancer/PWB929_cancer_H&E_+cmc_registered.tif")
-    fig, axs = plt.subplots(1,3)
-    axs[0] = plt.imshow(image1)
-    axs[1] = plt.imshow(image2)
-    axs[2] = plt.imshow(registered_image)
-    plt.show()
-
+    registered_image = rigidRegister("/media/sdc1/prostate_cancer/PWB929_cancer_H&E_+cmc_padded_big.tif", "/media/sdc1/prostate_cancer/PWB_929_DLC2_High_Res_horizontal.tif",out_name="/media/sdc1/prostate_cancer/PWB929_cancer_H&E_+cmc_padded_big_bspline_registered.tif")
