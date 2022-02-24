@@ -5,6 +5,7 @@ import numpy as np
 from typing import List, Tuple
 import aicspylibczi
 from nd2reader import ND2Reader
+from icecream import ic
 
 # ap = argparse.ArgumentParser(description="Extract tif from an image and count neurons and ganglia.")
 # ap.add_argument('file_path',type=str,help="Path (relative or absolute) to target image")
@@ -73,7 +74,7 @@ def readImage(file_path: str) -> Tuple[np.array, str]:
         with ND2Reader(file_path) as image:
             img_type = "nd2"
             img_shape = image.sizes
-            return image, img_type, img_shape
+            return file_path, img_type, img_shape
 
 
 def extractMostInFocusZstack(image: np.ndarray, z_shape_index:int = -1) -> np.ndarray:
@@ -101,7 +102,7 @@ def extractMostInFocusZstack(image: np.ndarray, z_shape_index:int = -1) -> np.nd
 
 
 
-def extractSingleImages(image: np.ndarray, indexes_dict: dict, image_type: str, filename: str):
+def extractSingleImages(image: str or np.ndarray, indexes_dict: dict, image_type: str, filename: str):
     """Extract from multi-dimensional input images all singe-stack images indicated by the indexes dict.
 
     Parameters
@@ -135,4 +136,20 @@ def extractSingleImages(image: np.ndarray, indexes_dict: dict, image_type: str, 
                 extracted_image,shape = image.read_image(shape_index=channel_index)
                 extracted_image = extracted_image[0,0,0,0,0,:,:]
                 io.imsave(f"{os.path.splitext(filename)[0]}_i{shape_index}_c{channel_index}.tif", extracted_image )
+    elif image_type == "nd2":
+        with ND2Reader(image) as images:
+            for shape_index, channel_indexes in indexes_dict.items():
+                if isinstance(channel_indexes, int): # if it's only one channel, it'ss give an iterable error, so we gotta make it a list
+                    channel_indexes = [channel_indexes] 
+                for channel_index in channel_indexes:
+                    extracted_image = images.get_frame_2D(c=channel_index)
+                    io.imsave(f"{os.path.splitext(filename)[0]}_i{shape_index}_c{channel_index}.tif", extracted_image)
 
+
+if __name__ == '__main__':
+    # image, img_type, img_shape = readImage("/home/david/Documents/enteric_neuron_tools/data/Slide2-1-2_Channel647,555,488_Seq0008.nd2")
+    # test_dict = {'c':[0,1,2]}
+    # extractSingleImages(image, test_dict, img_type, filename="/home/david/Documents/enteric_neuron_tools/data/Slide2-1-2_Channel647,555,488_Seq0008.nd2")
+
+    with ND2Reader(image) as image:
+        test_img = image.get_frame_2D(c=0, t=0)
