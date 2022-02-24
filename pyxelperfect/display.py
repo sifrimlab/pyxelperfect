@@ -5,6 +5,7 @@ from skimage.util import img_as_ubyte
 from skimage import color
 import matplotlib.pyplot as plt
 import numpy as np
+from icecream import ic
 import cv2
 
 def showSegmentation(labeled_image: np.array, original_image: np.array = None, save=True, plot=False):
@@ -31,7 +32,7 @@ def createComposite(img1, img2):
     A = cv2.cv2.imread(img1, cv2.cv2.IMREAD_ANYDEPTH)
     B = cv2.cv2.imread(img2, cv2.cv2.IMREAD_ANYDEPTH)
     bitDepth = A.dtype
-    print(A.dtype, B.dtype)
+    # print(A.dtype, B.dtype)
     zeros = np.zeros(A.shape[:2], dtype=bitDepth)
 
     ##Don't forget, cv2.cv2 works with a different order sometimes, so it's not RGB it's BGR
@@ -39,9 +40,19 @@ def createComposite(img1, img2):
     
     return merged
 
-if __name__ == '__main__':
-    image1_path = "/media/sdc1/prostate_cancer/PWB929_normal_H&E_+cmc_padded.tif"
-    image2_path = "/media/sdc1/prostate_cancer/PWB929_cancer_H&E_+cmc_padded.tif"
+def evaluateRegistration(ref_image, target_image, registered_target, identifier: str = "", plot=True):
+    original_situation = createComposite(ref_image, target_image)
+    original_situation = img_as_ubyte(original_situation)
+    registered_situation = createComposite(ref_image, registered_target)
+    registered_situation = img_as_ubyte(registered_situation)
 
-    merged = createComposite(image1_path, image2_path)
-    io.imsave("/media/sdc1/prostate_cancer/PWB929_normal_cancer_H&E_+cmc_padded_composite.tif", merged)
+    if identifier:
+        io.imsave(f"overlay_registered_{identifier}.tif", registered_situation)
+    if plot:
+        fig, axs = plt.subplots(1,2)
+        axs[0] = plt.imshow(original_situation)
+        axs[1] = plt.imshow(registered_situation)
+        plt.show()
+
+
+

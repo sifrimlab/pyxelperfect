@@ -4,8 +4,9 @@ import SimpleITK as sitk
 import matplotlib.pyplot as plt
 from skimage import io
 from icecream import ic
+from display import evaluateRegistration, createComposite
 
-def calculateTransform(fixed, moving):
+def translationTranform(fixed, moving):
     R = sitk.ImageRegistrationMethod()
     R.SetMetricAsCorrelation()
     R.SetOptimizerAsRegularStepGradientDescent(4.0, .01, 200)
@@ -14,7 +15,7 @@ def calculateTransform(fixed, moving):
     outTx = R.Execute(fixed, moving)
     return outTx
 
-def calculateBsplineTransform(fixed, moving):
+def bSplineTransform(fixed, moving):
     transformDomainMeshSize = [8] * moving.GetDimension()
     tx = sitk.BSplineTransformInitializer(fixed,
                                           transformDomainMeshSize)
@@ -40,7 +41,10 @@ def warpImage(image, transform: str or sitk.Transform) -> sitk.Image :
     resampled = sitk.Resample(image, transform, sitk.sitkLinear, 0.0, sitk.sitkUInt16)
     return resampled
 
-def rigidRegister(ref_image: str or sitk.Image, target_image: str or sitk.Image, method="rigid",out_name: str = "") -> np.array:
+def performRegistration(ref_image: str or sitk.Image, target_image: str or sitk.Image, method="rigid",out_name: str = "") -> np.array:
+    transform_dict = {"translation": translationTranform, "rigid": rigidTransform, "affine": affineTransform, "bspline": bSplineTransform}
+
+    transformFunc = transform_dict[method]
 
     if isinstance(ref_image, str):
         ref = sitk.ReadImage(ref_image, sitk.sitkFloat32)
@@ -51,7 +55,7 @@ def rigidRegister(ref_image: str or sitk.Image, target_image: str or sitk.Image,
     else:
         target = target_image
 
-    transform = affineRegister(ref, target)
+    transform = transformFunc(ref, target)
 
     reformed_target = warpImage(target, transform)
 
@@ -60,9 +64,10 @@ def rigidRegister(ref_image: str or sitk.Image, target_image: str or sitk.Image,
         print("No out_name was given but target image is an image, so no output filepath can be generated. Registered image is not written to file.")
         reformed_target = sitk.GetArrayFromImage(reformed_target)
         return reformed_target
+
     # if the target was a string, but no outname was given, we have to derive the out_name first
     elif not out_name:
-        out_name = os.path.splitext(target_image)[0]+ "_registered.tif"
+        out_name = os.path.splitext(target_image)[0]+ f"_{method}registered.tif"
 
     # finally we write the image and return it
     sitk.WriteImage(reformed_target, out_name)
@@ -70,7 +75,7 @@ def rigidRegister(ref_image: str or sitk.Image, target_image: str or sitk.Image,
     reformed_target = sitk.GetArrayFromImage(reformed_target)
     return reformed_target
 
-def affineRegister(fixed, moving):
+def affineTransform(fixed, moving):
     R = sitk.ImageRegistrationMethod()
     R.SetMetricAsCorrelation()
     R.SetOptimizerAsRegularStepGradientDescent(4.0, .01, 200)
@@ -79,5 +84,22 @@ def affineRegister(fixed, moving):
     outTx = R.Execute(fixed, moving)
     return outTx
 
+def rigidTransform(fixed, moving):
+    R = sitk.ImageRegistrationMethod()
+    R.SetMetricAsCorrelation()
+    R.SetOptimizerAsRegularStepGradientDescent(4.0, .01, 200)
+    R.SetInitialTransform(sitk.ScaleTransform(fixed.GetDimension()))
+    R.SetInterpolator(sitk.sitkLinear)
+    outTx = R.Execute(fixed, moving)
+    return outTx
+
 if __name__ == '__main__':
-    registered_image = rigidRegister("/media/sdc1/prostate_cancer/PWB929_cancer_H&E_+cmc_padded_big.tif", "/media/sdc1/prostate_cancer/PWB_929_DLC2_High_Res_horizontal.tif",out_name="/media/sdc1/prostate_cancer/PWB929_cancer_H&E_+cmc_padded_big_bspline_registered.tif")
+    original_image ="/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif"
+    target_image ="/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated.tif"
+    # registered_image = performRegistration("/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif","/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated.tif",out_name="/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated_registered.tif", method="bspline")
+    registered_image =  performRegistration("/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif","/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated.tif",out_name= "/home/david/Documents/prostate_cancer/PWB929_DLC1.tif", method="translation")
+    # io.imsave("original_sit.tif", createComposite(original_image, target_image))
+    # io.imsave("registered_sit.png", createComposite(original_image,  "/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated_registered.tif"))
+    evaluateRegistration(original_image, target_image, "/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated_registered.tif", plot=False, identifier="rigid")
+
+
