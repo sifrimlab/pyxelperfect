@@ -88,7 +88,7 @@ def rigidTransform(fixed, moving):
     R = sitk.ImageRegistrationMethod()
     R.SetMetricAsCorrelation()
     R.SetOptimizerAsRegularStepGradientDescent(4.0, .01, 200)
-    R.SetInitialTransform(sitk.ScaleTransform(fixed.GetDimension()))
+    R.SetInitialTransform(sitk.Euler2DTransform())
     R.SetInterpolator(sitk.sitkLinear)
     outTx = R.Execute(fixed, moving)
     return outTx
@@ -96,10 +96,10 @@ def rigidTransform(fixed, moving):
 if __name__ == '__main__':
     original_image ="/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif"
     target_image ="/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated.tif"
-    # registered_image = performRegistration("/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif","/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated.tif",out_name="/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated_registered.tif", method="bspline")
-    registered_image =  performRegistration("/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif","/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated.tif",out_name= "/home/david/Documents/prostate_cancer/PWB929_DLC1.tif", method="translation")
+    # registered_image =  performRegistration("/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif","/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated.tif", method="bspline")
+    registered_image =  performRegistration("/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif","/home/david/Documents/prostate_cancer/PWB929_DLC1_grey.tif", method="bspline")
     # io.imsave("original_sit.tif", createComposite(original_image, target_image))
     # io.imsave("registered_sit.png", createComposite(original_image,  "/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated_registered.tif"))
-    evaluateRegistration(original_image, target_image, "/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated_registered.tif", plot=False, identifier="rigid")
+    evaluateRegistration(original_image, target_image, "/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated_registered.tif", plot=False, identifier="bspline")
 
 
