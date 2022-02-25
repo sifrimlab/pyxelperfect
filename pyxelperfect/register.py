@@ -95,11 +95,11 @@ def rigidTransform(fixed, moving):
 
 if __name__ == '__main__':
     original_image ="/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif"
-    target_image ="/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated.tif"
+    target_image ="/home/david/Documents/prostate_cancer/PWB929_DLC1_grey_cropped_resized.tif"
     # registered_image =  performRegistration("/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif","/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated.tif", method="bspline")
-    registered_image =  performRegistration("/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif","/home/david/Documents/prostate_cancer/PWB929_DLC1_grey.tif", method="bspline")
+    registered_image =  performRegistration(original_image,target_image, method="bspline")
     # io.imsave("original_sit.tif", createComposite(original_image, target_image))
     # io.imsave("registered_sit.png", createComposite(original_image,  "/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated_registered.tif"))
-    evaluateRegistration(original_image, target_image, "/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated_registered.tif", plot=False, identifier="bspline")
+    # evaluateRegistration(original_image, target_image, "/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated_registered.tif", plot=False, identifier="bspline")
 
 

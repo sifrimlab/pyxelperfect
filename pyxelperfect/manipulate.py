@@ -1,5 +1,10 @@
 import cv2
 import numpy as np
+from skimage.transform import resize
+from skimage.util import img_as_uint
+from diagnose import getImageStats
+from skimage import io
+from icecream import ic
 
 
 # Automatic brightness and contrast optimization with optional histogram clipping
@@ -47,12 +52,23 @@ def automaticBrightnessAndContrast(image: np.array, clip_hist_percent: int =1):
     auto_result = cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
     return (auto_result, alpha, beta)
 
+def equalizeImageSize(ref_image: np.array, target_image: np.array, save = False, out_name = "") -> np.array:
+    target_resized = resize(target_image,ref_image.shape)
+    target_resized = img_as_uint(target_resized)
+    if save and out_name:
+        io.imsave(f"{out_name}_resized.tif", target_resized)
+    return target_resized
+
+
 if __name__ == "__main__":
 
-    image = cv2.imread("/home/david/Documents/communISS/data/merfish/merfish_5.tif")
-    auto_result, alpha, beta = automaticBrightnessAndContrast(image)
-    print('alpha', alpha)
-    print('beta', beta)
-    cv2.imwrite("/home/david/Documents/communISS/data/merfish/merfish_5_contrast.tif", auto_result)
+    image = io.imread("/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif")
+    image2 = io.imread("/home/david/Documents/prostate_cancer/PWB929_DLC1_grey_cropped.tif")
+    equalizeImageSize(image, image2, save=True, out_name = "/home/david/Documents/prostate_cancer/PWB929_DLC1_grey_cropped")
+    
+    # auto_result, alpha, beta = automaticBrightnessAndContrast(image)
+    # print('alpha', alpha)
+    # print('beta', beta)
+    # cv2.imwrite("/home/david/Documents/communISS/data/merfish/merfish_5_contrast.tif", auto_result)
     # cv2.imshow('auto_result', auto_result)
     # cv2.waitKey()
