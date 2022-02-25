@@ -28,16 +28,16 @@ def showImage(image: np.array):
     plt.show()
 
 
-def createComposite(img1, img2):
-    A = cv2.cv2.imread(img1, cv2.cv2.IMREAD_ANYDEPTH)
-    B = cv2.cv2.imread(img2, cv2.cv2.IMREAD_ANYDEPTH)
+def createComposite(img1_path, img2_path):
+    A = cv2.cv2.imread(img1_path, cv2.cv2.IMREAD_ANYDEPTH)
+    B = cv2.cv2.imread(img2_path, cv2.cv2.IMREAD_ANYDEPTH)
     bitDepth = A.dtype
     # print(A.dtype, B.dtype)
     zeros = np.zeros(A.shape[:2], dtype=bitDepth)
 
     ##Don't forget, cv2.cv2 works with a different order sometimes, so it's not RGB it's BGR
     merged = cv2.cv2.merge((A,B,zeros))
-    
+    merged = img_as_ubyte(merged)
     return merged
 
 def evaluateRegistration(ref_image, target_image, registered_target, identifier: str = "", plot=True):
@@ -54,5 +54,6 @@ def evaluateRegistration(ref_image, target_image, registered_target, identifier:
         axs[1] = plt.imshow(registered_situation)
         plt.show()
 
-
-
+if __name__ == '__main__':
+    io.imsave("composite.tif",createComposite("/home/david/Documents/prostate_cancer/PWB929_DLC1_grey.tif","/home/david/Documents/prostate_cancer/PWB929_DLC1_grey_bsplineregistered.tif"))
+    # showImage("./composite.tif")

@@ -6,13 +6,13 @@ import pandas as pd
 import glob
 from skimage.filters import laplace
 from skimage.util import dtype_limits
-from segment import otsuThreshold
+from threshold import otsuThreshold
 from typing import List
 
 import PIL # this is needed to read in the giant images with skimage.io.read_collection
 PIL.Image.MAX_IMAGE_PIXELS = 933120000
 
-def getImageStats(image: np.ndarray, out_print: bool = False, save: bool = False, result_prefix: str = "results") -> pd.DataFrame:
+def getImageStats(image: np.ndarray, out_print: bool = True, save: bool = False, result_prefix: str = "results") -> pd.DataFrame:
     """Returns general stats about the input image.
 
     Parameters
@@ -118,7 +118,9 @@ if __name__ == '__main__':
     # image = io.imread("/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/Slide2-2-2_Region0000_Channel647,555,488_Seq0017_c1_z0_tile14.tif")
     # getImageStats(image, out_print = True)
     # image_list = [io.imread(file) for file in ("/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/Slide2-2-2_Region0000_Channel647,555,488_Seq0017_c1_z0_tile4.tif", "/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/Slide2-2-2_Region0000_Channel647,555,488_Seq0017_c1_z0_tile5.tif")]
-    compareImageStats(glob_pattern = "/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/*tile*.tif")
+    # compareImageStats(glob_pattern = "/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/*tile*.tif")
+    getImageStats(io.imread("./composite.tif"))
+
 
 
     
