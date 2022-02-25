@@ -145,9 +145,9 @@ def cellPoseSegment(img: np.array, model:str = "nuclei", channels: np.array = [0
 
 
 if __name__ == "__main__":
-    image_path = "/home/david/Documents/communISS/data/merfish/MERFISH_nuclei.TIFF"
+    image_path = "/home/david/Documents/prostate_cancer/PWB929_DLC1_grey.tif"
     image = io.imread(image_path)
-    label_image = cellPoseSegment(image)
+    label_image = otsuSegment(image)
     showSegmentation(label_image, image, save=False, plot=True)
     # plt.imshow(label_image)
     # plt.show()

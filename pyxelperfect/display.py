@@ -50,10 +50,10 @@ def evaluateRegistration(ref_image, target_image, registered_target, identifier:
         io.imsave(f"overlay_registered_{identifier}.tif", registered_situation)
     if plot:
         fig, axs = plt.subplots(1,2)
-        axs[0] = plt.imshow(original_situation)
-        axs[1] = plt.imshow(registered_situation)
+        axs[0].imshow(original_situation)
+        axs[1].imshow(registered_situation)
         plt.show()
 
 if __name__ == '__main__':
-    io.imsave("composite.tif",createComposite("/home/david/Documents/prostate_cancer/PWB929_DLC1_grey.tif","/home/david/Documents/prostate_cancer/PWB929_DLC1_grey_bsplineregistered.tif"))
+    io.imsave("composite_with_ref_unregistered.tif",createComposite("/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif","/home/david/Documents/prostate_cancer/PWB929_DLC1_grey_cropped_resized.tif"))
     # showImage("./composite.tif")
