@@ -12,7 +12,7 @@ from display import showSegmentation
 from cellpose import models
 
 
-def otsuSegment(img: np.array, tile_nr="") -> np.array :
+def otsuSegment(img: np.array) -> np.array :
     '''
         note to self: this code adapted from DigitalSreeni assumes that your input image is an 8-bit rgb, which makes it so that we have to do some image format transformation because:
         - cv2.shreshold accepts only 8-bit grayscale
@@ -145,10 +145,11 @@ def cellPoseSegment(img: np.array, model:str = "nuclei", channels: np.array = [0
 
 
 if __name__ == "__main__":
-    image_path = "/home/david/Documents/prostate_cancer/PWB929_DLC1_grey.tif"
+    image_path = "/home/nacho/Documents/prostate_cancer/PWB929_DLC1_grey.tif"
     image = io.imread(image_path)
     label_image = otsuSegment(image)
-    showSegmentation(label_image, image, save=False, plot=True)
+    io.imsave("label_image.tif", label_image)
+    showSegmentation(label_image, image, save=True, plot=False)
     # plt.imshow(label_image)
     # plt.show()
     # print(attribute_df)
