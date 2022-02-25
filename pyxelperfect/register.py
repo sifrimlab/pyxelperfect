@@ -41,19 +41,25 @@ def warpImage(image, transform: str or sitk.Transform) -> sitk.Image :
     resampled = sitk.Resample(image, transform, sitk.sitkLinear, 0.0, sitk.sitkUInt16)
     return resampled
 
-def performRegistration(ref_image: str or sitk.Image, target_image: str or sitk.Image, method="rigid",out_name: str = "") -> np.array:
+def performRegistration(ref_image: str or sitk.Image or np.array, target_image: str or sitk.Image or np.array, method="rigid",out_name: str = "") -> np.array:
     transform_dict = {"translation": translationTranform, "rigid": rigidTransform, "affine": affineTransform, "bspline": bSplineTransform}
 
     transformFunc = transform_dict[method]
 
     if isinstance(ref_image, str):
         ref = sitk.ReadImage(ref_image, sitk.sitkFloat32)
+    elif isinstance(ref_image, np.array):
+        ref = sitk.GetImageFromArray(ref_image)
     else:
         ref = ref_image
+
     if isinstance(target_image, str):
         target = sitk.ReadImage(target_image, sitk.sitkFloat32)
+    elif isinstance(target_image, np.array):
+        target = sitk.GetImageFromArray(target_image)
     else:
         target = target_image
+
 
     transform = transformFunc(ref, target)
 
