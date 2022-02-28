@@ -4,7 +4,7 @@ import cv2 as cv
 import numpy as np
 from skimage import io
 from skimage.color import rgb2gray
-from skimage.util import invert,img_as_ubyte
+from skimage.util import invert,img_as_ubyte, img_as_uint
 from skimage.transform import rotate
 import matplotlib.pyplot as plt
 from manipulate import equalizeImageSize
@@ -62,10 +62,12 @@ def isolateForeground(input_image: np.array, kernel_size:int = 100, bbox_expansi
     # io.imsave("tmp_labeledimg.tif", labeled_image)
     # Meaure imageprops
     df = measureLabeledImage(labeled_image)
-    df.to_csv("tmp.csv")
 
     # get max area row
     max_area_label_number = df.iloc[df['Area'].idxmax()]['image_label']
+
+    # check if the object is horizontal or vertical, horizontal if orientation < 0
+    bool_rotate = df.iloc[df['Area'].idxmax()]['orientation']
 
     # Set everything that isnt max label to zero
     labeled_image[labeled_image!=max_area_label_number] = 0
@@ -74,7 +76,7 @@ def isolateForeground(input_image: np.array, kernel_size:int = 100, bbox_expansi
 
     foreground_image = cutBboxFromImage(image_bbox, input_image)
 
-    return foreground_image
+    return foreground_image, bool_rotate
 
 
 
@@ -95,20 +97,24 @@ def perform_registration(ref_image_path: str, target_image_path: str):
 
     target_image = invert(target_image)
 
-    target_image = rotate(target_image, -90, resize=True)
 
     # Crop foreground from the weird Spatial H&E stain
-    target_image = isolateForeground(target_image)
+    target_image, bool_rotate = isolateForeground(target_image, bbox_expansion= 500)
 
+    target_image = rotate(target_image, -90, resize=True)
 
     # Downscale
     target_image = equalizeImageSize(ref_image, target_image)
 
+
+    # Equalize ref image dtype, cause target image comes out as uint
+    ref_image = img_as_uint(ref_image)
+
     registered_image = performRegistration(ref_image, target_image, method="bspline")
 
     fig, axs = plt.subplots(1,2)
-    axs[0].imshow(original_target_image, cmap="gray")
-    axs[1].imshow(target_image, cmap="gray")
+    axs[0].imshow(ref_image, cmap="gray")
+    axs[1].imshow(registered_image, cmap="gray")
     plt.show()
 
 if __name__ == '__main__':
