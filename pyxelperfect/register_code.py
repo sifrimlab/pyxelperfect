@@ -110,7 +110,7 @@ def perform_registration(ref_image_path: str, target_image_path: str):
     # Equalize ref image dtype, cause target image comes out as uint
     ref_image = img_as_uint(ref_image)
 
-    registered_image = performRegistration(ref_image, target_image, method="bspline")
+    registered_image = performRegistration(ref_image, target_image, method="bspline", out_name=f"{target_base_name}_registered.tif")
 
     fig, axs = plt.subplots(1,2)
     axs[0].imshow(ref_image, cmap="gray")
@@ -118,7 +118,7 @@ def perform_registration(ref_image_path: str, target_image_path: str):
     plt.show()
 
 if __name__ == '__main__':
-    ref_image_path = "/home/david/Documents/prostate_cancer/testing_data/PWB929_normal_HE_minus_cmc_10X.tif"
+    ref_image_path = "/home/david/Documents/prostate_cancer/testing_data/PWB929_normal_HE_min_cmc_10X.tif"
     target_image_path = "/home/david/Documents/prostate_cancer/testing_data/PWB929_DLC1.tif"
     perform_registration(ref_image_path, target_image_path)
     # isolateForeground(io.imread("/home/david/Documents/prostate_cancer/testing_data/PWB929_DLC1.tif"))
