@@ -1,6 +1,7 @@
 from skimage.io import imread_collection, imsave, imread
 import numpy as np
 from tifffile import imsave
+
 from typing import List, Tuple
 import glob
 import os
@@ -85,10 +86,10 @@ def tileImage(image: np.ndarray, ydiv: int, xdiv: int, image_prefix: str="image_
     final_split = [item for sublist in [np.array_split(row, xdiv, axis = 1) for row in temp_split] for item in sublist]
 
     for i, img in enumerate(final_split, 1):
-        imsave(f"{image_prefix}_tile{i}.tif", img)
+        imsave(f"{image_prefix}tile{i}.tif", img)
 
-def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int) -> Tuple[int]:
-    """Tile the images caught by the glob pattern by first padding them to a global image size needed to tile them all into the same tile size, given by the input values.
+def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int, out_dir: str = "") -> Tuple[int]:
+    """Tile the images caught by the glob pattern by first padding them to a global image size needed to tile them all into the same tile size, given by the input values. Tiles are written to tif files in the basedir of the original image, or to out_dir if given, with naming convention {out_dir | basedir}/{image_name}_tile{i}.tif
 
     Parameters
     ----------
@@ -104,12 +105,20 @@ def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int) -> 
     Tuple[int]
 
     """
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
 
     target_full_rows, target_full_columns, ydiv, xdiv = calculateOptimalLargestResolution(glob_pattern, target_tile_height, target_tile_width)
+
     padded_imgs = {}
-    for image_path in glob.glob(glob_pattern):
-        padded_imgs[os.path.splitext(os.path.basename(image_path))[0]] = padImage(image_path, int(target_full_rows), int(target_full_columns))
+    if not out_dir:
+        for image_path in glob.glob(glob_pattern):
+            padded_imgs[os.path.splitext(image_path)[0]] = padImage(imread(image_path), int(target_full_rows), int(target_full_columns))
+    else:
+        for image_path in glob.glob(glob_pattern):
+            padded_imgs[os.path.join(out_dir, os.path.splitext(os.path.basename(image_path))[0])] = padImage(imread(image_path), int(target_full_rows), int(target_full_columns))
 
     for k, padded_img in padded_imgs.items():
-        tileImage(padded_img, target_tile_height = target_full_rows, target_tile_width = target_full_columns, ydiv = ydiv, xdiv = xdiv, image_prefix = k)
+        tileImage(padded_img,ydiv = ydiv, xdiv = xdiv, image_prefix = k)
     return xdiv, ydiv
+
