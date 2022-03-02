@@ -19,16 +19,65 @@ def rigidTransform(fixed, moving):
     R = sitk.ImageRegistrationMethod()
     R.SetMetricAsCorrelation()
     R.SetOptimizerAsRegularStepGradientDescent(4.0, .01, 200)
-    R.SetInitialTransform(sitk.Euler2DTransform())
+    initial_transform = sitk.CenteredTransformInitializer(
+                        fixed,
+                        moving,
+                        sitk.Euler2DTransform(),
+                        sitk.CenteredTransformInitializerFilter.GEOMETRY,
+                    )
+    R.SetInitialTransform(initial_transform)
     R.SetInterpolator(sitk.sitkLinear)
     outTx = R.Execute(fixed, moving)
     return outTx
+
+def scaleTransform(fixed, moving):
+    R = sitk.ImageRegistrationMethod()
+    R.SetMetricAsCorrelation()
+    R.SetOptimizerAsRegularStepGradientDescent(4.0, .01, 200)
+    initial_transform = sitk.CenteredTransformInitializer(
+                        fixed,
+                        moving,
+                        sitk.ScaleTransform(fixed.GetDimension()),
+                        sitk.CenteredTransformInitializerFilter.GEOMETRY,
+                    )
+    R.SetInitialTransform(initial_transform)
+    R.SetInterpolator(sitk.sitkLinear)
+    outTx = R.Execute(fixed, moving)
+    return outTx
+
+def multScaleTransform(fixed, moving, initial_transform):
+    # This is the registration configuration which we use in all cases. The only parameter that we vary
+# is the initial_transform.
+    R = sitk.ImageRegistrationMethod()
+    R.SetMetricAsMattesMutualInformation(numberOfHistogramBins=50)
+    R.SetMetricSamplingStrategy(R.RANDOM)
+    R.SetMetricSamplingPercentage(0.01)
+    R.SetInterpolator(sitk.sitkLinear)
+    R.SetOptimizerAsGradientDescent(
+        learningRate=1.0,
+        numberOfIterations=100,
+        estimateLearningRate=registration_method.Once,
+    )
+    R.SetOptimizerScalesFromPhysicalShift()
+    R.SetInitialTransform(initial_transform, inPlace=False)
+    R.SetShrinkFactorsPerLevel(shrinkFactors=[4, 2, 1])
+    R.SetSmoothingSigmasPerLevel(smoothingSigmas=[2, 1, 0])
+    R.SmoothingSigmasAreSpecifiedInPhysicalUnitsOn()
+    outTx = R.Execute(fixed, moving)
+    return outTx
+
 
 def affineTransform(fixed, moving):
     R = sitk.ImageRegistrationMethod()
     R.SetMetricAsCorrelation()
     R.SetOptimizerAsRegularStepGradientDescent(4.0, .01, 200)
-    R.SetInitialTransform(sitk.AffineTransform(fixed.GetDimension()))
+    initial_transform = sitk.CenteredTransformInitializer(
+                        fixed,
+                        moving,
+                        sitk.AffineTransform(fixed.GetDimension()),
+                        sitk.CenteredTransformInitializerFilter.GEOMETRY,
+                    )
+    R.SetInitialTransform(initial_transform)
     R.SetInterpolator(sitk.sitkLinear)
     outTx = R.Execute(fixed, moving)
     return outTx
@@ -60,7 +109,7 @@ def warpImage(image, transform: str or sitk.Transform) -> sitk.Image :
     return resampled
 
 def performRegistration(ref_image: str or sitk.Image or np.ndarray, target_image: str or sitk.Image or np.ndarray, method="rigid",out_name: str = "") -> np.array:
-    transform_dict = {"translation": translationTranform, "rigid": rigidTransform, "affine": affineTransform, "bspline": bSplineTransform}
+    transform_dict = {"translation": translationTranform, "rigid": rigidTransform, "affine": affineTransform, "bspline": bSplineTransform, "scale": scaleTransform}
 
     transformFunc = transform_dict[method]
 
@@ -100,7 +149,7 @@ def performRegistration(ref_image: str or sitk.Image or np.ndarray, target_image
     sitk.WriteImage(reformed_target, out_name)
 
     reformed_target = sitk.GetArrayFromImage(reformed_target)
-    return reformed_target
+    return reformed_target, out_name
 
 
 
@@ -108,10 +157,10 @@ if __name__ == '__main__':
     original_image ="/home/david/Documents/prostate_cancer/testing_data/affine_test/PWB929_cancer_HE_min_cmc_10X_grey.tif"
     target_image ="/home/david/Documents/prostate_cancer/testing_data/affine_test/PWB929_cancer_HE_min_cmc_10X_scaled0.75_padded.tif"
 
-    method = "affine"
-    registered_image =  performRegistration(original_image,target_image, method=method)
+    method = "rigid"
+    registered_image, registered_image_path =  performRegistration(target_image,original_image, method=method)
     # io.imsave("original_sit.tif", createComposite(original_image, target_image))
     # io.imsave("registered_sit.png", createComposite(original_image,  "/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated_registered.tif"))
-    evaluateRegistration(original_image, target_image, f"/home/david/Documents/prostate_cancer/testing_data/affine_test/PWB929_cancer_HE_min_cmc_10X_scaled0.75_padded_{method}registered.tif", plot=True, identifier="bspline")
+    evaluateRegistration(target_image,original_image,  registered_image_path, plot=True)
 
 
