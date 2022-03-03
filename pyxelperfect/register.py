@@ -1,10 +1,7 @@
 import os
 import numpy as np
 import SimpleITK as sitk
-import matplotlib.pyplot as plt
 from skimage import io
-from icecream import ic
-from display import evaluateRegistration, createComposite
 
 def translationTranform(fixed, moving):
     R = sitk.ImageRegistrationMethod()
@@ -56,10 +53,10 @@ def multScaleTransform(fixed, moving, initial_transform):
     R.SetOptimizerAsGradientDescent(
         learningRate=1.0,
         numberOfIterations=100,
-        estimateLearningRate=registration_method.Once,
+        estimateLearningRate=R.Once,
     )
     R.SetOptimizerScalesFromPhysicalShift()
-    R.SetInitialTransform(initial_transform, inPlace=False)
+    R.SetInitialTransform(initial_transform)
     R.SetShrinkFactorsPerLevel(shrinkFactors=[4, 2, 1])
     R.SetSmoothingSigmasPerLevel(smoothingSigmas=[2, 1, 0])
     R.SmoothingSigmasAreSpecifiedInPhysicalUnitsOn()
@@ -150,17 +147,3 @@ def performRegistration(ref_image: str or sitk.Image or np.ndarray, target_image
 
     reformed_target = sitk.GetArrayFromImage(reformed_target)
     return reformed_target, out_name
-
-
-
-if __name__ == '__main__':
-    original_image ="/home/david/Documents/prostate_cancer/testing_data/affine_test/PWB929_cancer_HE_min_cmc_10X_grey.tif"
-    target_image ="/home/david/Documents/prostate_cancer/testing_data/affine_test/PWB929_cancer_HE_min_cmc_10X_scaled0.75_padded.tif"
-
-    method = "rigid"
-    registered_image, registered_image_path =  performRegistration(target_image,original_image, method=method)
-    # io.imsave("original_sit.tif", createComposite(original_image, target_image))
-    # io.imsave("registered_sit.png", createComposite(original_image,  "/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey_translated_registered.tif"))
-    evaluateRegistration(target_image,original_image,  registered_image_path, plot=True)
-
-
