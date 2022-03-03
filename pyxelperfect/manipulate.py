@@ -3,7 +3,6 @@ import numpy as np
 from skimage.transform import resize
 from skimage.util import img_as_uint
 from skimage import io
-from icecream import ic
 
 
 # Automatic brightness and contrast optimization with optional histogram clipping
