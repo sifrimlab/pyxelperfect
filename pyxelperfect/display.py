@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 from skimage import io
 import numpy as np
 from skimage.util import img_as_ubyte
@@ -51,9 +52,17 @@ def evaluateRegistration(ref_image, target_image, registered_target, identifier:
     if plot:
         fig, axs = plt.subplots(1,2)
         axs[0].imshow(original_situation)
+        axs[0].set_title("Before Registration")
+        red_patch = mpatches.Patch(color='red', label='MS ref')
+        green_patch = mpatches.Patch(color='green', label='ST target')
+        axs[0].legend(handles=[red_patch, green_patch])
         axs[1].imshow(registered_situation)
+        axs[1].set_title("After Registration")
+        green_patch_2 = mpatches.Patch(color='green', label='ST moved')
+        axs[1].legend(handles=[red_patch, green_patch_2])
         plt.show()
 
 if __name__ == '__main__':
-    io.imsave("composite_with_ref_unregistered.tif",createComposite("/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif","/home/david/Documents/prostate_cancer/PWB929_DLC1_grey_cropped_resized.tif"))
+    # io.imsave("composite_registered.tif",createComposite("/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_normal_HE_minus_cmc_10X_processed_before_reg.tif","/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_DLC1_processed_registered.tif"))
+    evaluateRegistration("/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_normal_HE_minus_cmc_10X_processed_before_reg.tif","/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_DLC1_processed_before_reg.tif" ,"/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_DLC1_processed_registered.tif", plot=True)
     # showImage("./composite.tif")
