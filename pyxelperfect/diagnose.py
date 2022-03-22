@@ -6,13 +6,13 @@ import pandas as pd
 import glob
 from skimage.filters import laplace
 from skimage.util import dtype_limits
-from threshold import otsuThreshold
-from typing import List
+from .threshold import otsuThreshold
+from typing import List, Dict
 
 import PIL # this is needed to read in the giant images with skimage.io.read_collection
 PIL.Image.MAX_IMAGE_PIXELS = 933120000
 
-def getImageStats(image: np.ndarray, out_print: bool = True, save: bool = False, result_prefix: str = "results") -> pd.DataFrame:
+def getImageStats(image: np.ndarray, out_print: bool = True, save: bool = False, result_prefix: str = "results", add_props: Dict = {}) -> pd.DataFrame:
     """Returns general stats about the input image.
 
     Parameters
@@ -72,6 +72,11 @@ def getImageStats(image: np.ndarray, out_print: bool = True, save: bool = False,
     attribute_col.append("Percentage above otsu")
     value_col.append(perc_above)
 
+    if add_props:
+        for key, value in add_props.items():
+            attribute_col.append(key)
+            value_col.append(value)
+
     # Make result dataframe
     zipped = list(zip(attribute_col, value_col))
     result_df = pd.DataFrame(zipped, columns=['Attribute', f'{result_prefix}'], index=None)
@@ -111,6 +116,7 @@ def compareImageStats(glob_pattern: str = None, result_prefix = "result") -> pd.
     merged_df = reduce(lambda x, y: pd.merge(x, y, on = 'Attribute'), df_list)
     merged_df.to_html(f"{result_prefix}.html")
 
+    return merged_df
         
 
 

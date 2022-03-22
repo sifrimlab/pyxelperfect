@@ -7,7 +7,10 @@ from skimage import io
 
 # Automatic brightness and contrast optimization with optional histogram clipping
 def automaticBrightnessAndContrast(image: np.array, clip_hist_percent: int =1):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    if len(image.shape) > 2:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else: 
+        gray = image
     
     # Calculate grayscale histogram
     hist = cv2.calcHist([gray],[0],None,[256],[0,256])

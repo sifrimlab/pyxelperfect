@@ -5,7 +5,6 @@ import numpy as np
 from typing import List, Tuple
 import aicspylibczi
 from nd2reader import ND2Reader
-from icecream import ic
 
 # ap = argparse.ArgumentParser(description="Extract tif from an image and count neurons and ganglia.")
 # ap.add_argument('file_path',type=str,help="Path (relative or absolute) to target image")

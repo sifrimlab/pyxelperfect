@@ -8,10 +8,10 @@ from skimage.color import rgb2gray
 from skimage.util import invert,img_as_ubyte, img_as_uint
 from skimage.transform import rotate
 import matplotlib.pyplot as plt
-from manipulate import equalizeImageSize
-from register import performRegistration
-from measure import measureLabeledImage
-from decorators import measureTime
+from .manipulate import equalizeImageSize
+from .register import performRegistration
+from .measure import measureLabeledImage
+from .decorators import measureTime
 
 
 def expandBbox(bbox, size: int):
@@ -103,6 +103,9 @@ def ST_to_MSI_registration(fixed_path: str, moving_path:str):
     fixed_image = sitk.GetImageFromArray(ref_image)
 
     moving_image = sitk.GetImageFromArray(target_image)
+
+    fixed_image = sitk.Cast(fixed_image, sitk.sitkFloat32)
+    moving_image = sitk.Cast(moving_image, sitk.sitkFloat32)
     
     initial_transform = sitk.CenteredTransformInitializer(
     fixed_image,

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from skimage import measure
 from csbdeep.utils import Path, normalize
 from stardist.models import StarDist2D
-from display import showSegmentation
+from .display import showSegmentation
 from cellpose import models
 
 
@@ -145,11 +145,11 @@ def cellPoseSegment(img: np.array, model:str = "nuclei", channels: np.array = [0
 
 
 if __name__ == "__main__":
-    image_path = "/home/nacho/Documents/prostate_cancer/PWB929_DLC1_grey.tif"
+    image_path = "/home/david/Documents/phd/teaching/IBS_project/original_imgs/1391_C109_40X_BSA5_1_only_DAPI.tif"
     image = io.imread(image_path)
-    label_image = otsuSegment(image)
-    io.imsave("label_image.tif", label_image)
-    showSegmentation(label_image, image, save=True, plot=False)
+    label_image = stardistSegment(image)
+    # io.imsave("label_image.tif", label_image)
+    showSegmentation(label_image, image, save=False, plot=True)
     # plt.imshow(label_image)
     # plt.show()
     # print(attribute_df)

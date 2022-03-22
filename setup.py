@@ -46,6 +46,7 @@ setuptools.setup(
         "csbdeep",
         "tensorflow",
         "SimpleITK",
+        "cellpose",
     ],
     classifiers = [
         "Development Status :: 3 - Alpha",

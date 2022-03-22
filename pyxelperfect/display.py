@@ -6,7 +6,6 @@ from skimage.util import img_as_ubyte
 from skimage import color
 import matplotlib.pyplot as plt
 import numpy as np
-from icecream import ic
 import cv2
 
 def showSegmentation(labeled_image: np.array, original_image: np.array = None, save=True, plot=False):
