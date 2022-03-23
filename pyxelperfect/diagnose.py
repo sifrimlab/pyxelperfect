@@ -6,7 +6,7 @@ import pandas as pd
 import glob
 from skimage.filters import laplace
 from skimage.util import dtype_limits
-from .threshold import otsuThreshold
+from threshold import otsuThreshold
 from typing import List, Dict
 
 import PIL # this is needed to read in the giant images with skimage.io.read_collection
@@ -80,14 +80,16 @@ def getImageStats(image: np.ndarray, out_print: bool = True, save: bool = False,
     # Make result dataframe
     zipped = list(zip(attribute_col, value_col))
     result_df = pd.DataFrame(zipped, columns=['Attribute', f'{result_prefix}'], index=None)
+    result_df.index=result_df['Attribute']
+    result_df = result_df.drop('Attribute', axis=1)
 
     if out_print:
         print(result_df.to_markdown())
     if save:
-        result_df.to_csv(f"{result_prefix}.csv", index=None)
-    return result_df
+        result_df.T.to_csv(f"{result_prefix}.csv", index=None)
+    return result_df.T
 
-def compareImageStats(glob_pattern: str = None, result_prefix = "result") -> pd.DataFrame:
+def compareImageStats(glob_pattern: str = None, result_prefix = "result", add_props: Dict = {}) -> pd.DataFrame:
     """Create a dataframe comparing the general stats of a collection of images, defined by a glob pattern.
 
     Parameters
@@ -111,11 +113,12 @@ def compareImageStats(glob_pattern: str = None, result_prefix = "result") -> pd.
 
     df_list  = []
     for k,v in name_image_dict.items():
-        df_list.append(getImageStats(v, result_prefix = k, save=False, out_print=False))
+        df_list.append((getImageStats(v, result_prefix = k, save=False, out_print=False, add_props = add_props))) # Transpose to make concatenating possible
 
-    merged_df = reduce(lambda x, y: pd.merge(x, y, on = 'Attribute'), df_list)
+    # merged_df = reduce(lambda x, y: pd.merge(x, y, on = 'Attribute'), df_list)
+    merged_df = pd.concat(df_list)
+    merged_df = merged_df.sort_index() # sort for readability
     merged_df.to_html(f"{result_prefix}.html")
-
     return merged_df
         
 
@@ -123,9 +126,8 @@ def compareImageStats(glob_pattern: str = None, result_prefix = "result") -> pd.
 if __name__ == '__main__':
     # image = io.imread("/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/Slide2-2-2_Region0000_Channel647,555,488_Seq0017_c1_z0_tile14.tif")
     # getImageStats(image, out_print = True)
-    # image_list = [io.imread(file) for file in ("/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/Slide2-2-2_Region0000_Channel647,555,488_Seq0017_c1_z0_tile4.tif", "/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/Slide2-2-2_Region0000_Channel647,555,488_Seq0017_c1_z0_tile5.tif")]
+    image_list = [io.imread(f"/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/Slide2-2-2_Region0000_Channel647,555,488_Seq0017_c1_z0_tile{i}tif") for i in range(1, 20)]
     # compareImageStats(glob_pattern = "/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/*tile*.tif")
-    getImageStats(io.imread("./composite.tif"))
 
 
 
