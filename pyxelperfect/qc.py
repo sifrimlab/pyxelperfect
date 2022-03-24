@@ -3,6 +3,12 @@ from skimage import io
 from glob import glob
 from diagnose import getImageStats
 
+def isEdgeImage(image: np.ndarray):
+    if np.amin(image)[0] == 0:
+        return True
+    else:
+        return False
+
 def isGoodQuality(image: np.ndarray):
     df = getImageStats(image, out_print=False)
 
@@ -20,12 +26,13 @@ if __name__ == "__main__":
     from sklearn.metrics import confusion_matrix
     import seaborn as sns
     import matplotlib.pyplot as plt     
-    full_image_list = glob("/home/david/.config/nnn/mounts/nacho@10.38.76.144/amenra/single_nuclei/LiverSampleQC/*/*")
+    full_image_list = glob("/home/david/.config/nnn/mounts/nacho@10.38.76.144/amenra/single_nuclei/LiverSampleQC_test/*/*")
     y_labs = [True if "good" in file else False for file in full_image_list ]
     y_preds =  [isGoodQuality(io.imread(file)) for file in full_image_list ]
     correct_array = [pred == label for pred, label in zip(y_preds, y_labs)]
     wrong_images = [b for a, b in zip(correct_array, full_image_list) if not a]
     right_images = [b for a, b in zip(correct_array, full_image_list) if a]
+    right_bad_images = [b for a, b in zip(correct_array, full_image_list) if a and "bad" in b]
 
     fig, axs = plt.subplots(1,len(right_images))
     for i,path in enumerate(right_images):
