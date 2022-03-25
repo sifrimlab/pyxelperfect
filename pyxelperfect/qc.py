@@ -1,42 +1,73 @@
 import numpy as np
 from skimage import io
+from skimage.transform import resize
 from glob import glob
 from diagnose import getImageStats
+import re
+import math
 
 def isEdgeImage(image: np.ndarray):
-    if np.amin(image)[0] == 0:
-        return True
-    else:
-        return False
+    return np.amin(image)[0] == 0:
 
 def isGoodQuality(image: np.ndarray):
     df = getImageStats(image, out_print=False)
-
     if df["Actual range"][0] == (0,0):
         return False
-    elif df["Laplace std"][0] < 0.001:
-        return False
-    elif df["Actual range"][0][0] == 0:
+    elif df["Actual range"][0][0] != 0:
         return False
     elif df["Otsu threshold"][0] < 0:
         return False
+    elif df["Laplace std"][0] < 0.001:
+        return False
+    elif df["Otsu threshold"][0] < 100:
+        return False 
+    elif df["Otsu threshold"][0] > 1500:
+        return False 
     else:
         return True
 if __name__ == "__main__":
     from sklearn.metrics import confusion_matrix
     import seaborn as sns
     import matplotlib.pyplot as plt     
-    full_image_list = glob("/home/david/.config/nnn/mounts/nacho@10.38.76.144/amenra/single_nuclei/LiverSampleQC_test/*/*")
-    y_labs = [True if "good" in file else False for file in full_image_list ]
-    y_preds =  [isGoodQuality(io.imread(file)) for file in full_image_list ]
+    full_image_list = glob("/home/david/.config/nnn/mounts/nacho@10.38.76.144/tool/enteric_neurones/slidescanner_examples/tiles/*/*.tif")
+    y_labs = ["good" in file for file in full_image_list ]
+    y_preds =  [isGoodQuality(io.imread(file)) for file in full_image_list]
     correct_array = [pred == label for pred, label in zip(y_preds, y_labs)]
     wrong_images = [b for a, b in zip(correct_array, full_image_list) if not a]
     right_images = [b for a, b in zip(correct_array, full_image_list) if a]
     right_bad_images = [b for a, b in zip(correct_array, full_image_list) if a and "bad" in b]
+    right_good_images = [b for a, b in zip(correct_array, full_image_list) if a and "good" in b]
+    wrong_bad_images = [b for a, b in zip(correct_array, full_image_list) if not a and "bad" in b]
+    wrong_good_images = [b for a, b in zip(correct_array, full_image_list) if not a and "good" in b]
 
-    fig, axs = plt.subplots(1,len(right_images))
-    for i,path in enumerate(right_images):
-        axs[i].imshow(io.imread(path))
+    to_plot = wrong_bad_images
+    title = "wrong_bad_images"
+    # Testing dynamic plotting
+    tot = len(to_plot)
+    cols = round(math.sqrt(tot))
+    rows = tot // cols 
+    rows += tot % cols
+
+    position = range(1, tot+1)
+
+    fig = plt.figure(1)
+    st = fig.suptitle(title, fontsize="x-large")
+    for k in range(tot):
+        ax = fig.add_subplot(rows, cols, position[k])
+        image = io.imread(to_plot[k])
+        ax.imshow(resize(image, (image.shape[0] // 5, image.shape[1] // 5),anti_aliasing=True))
+        ax.set_title(re.findall(r'Slide\d+-\d+-\d+', to_plot[k])[0]  + "-"  + re.findall(r'tile\d+', to_plot[k])[0])
+        ax.axis("off")
+
+    # fig, axs = plt.subplots(1,len(wrong_bad_images))
+    # for i,path in enumerate(wrong_bad_images):
+    #     image = io.imread(path)
+    #     axs[i].imshow((resize(image, (image.shape[0] // 5, image.shape[1] // 5),anti_aliasing=True)))
+    # for ax in axs:
+    #     ax.axis("off")
+    # shift subplots down:
+    st.set_y(0.95)
+    fig.subplots_adjust(top=0.85)
     plt.show()
 
 
