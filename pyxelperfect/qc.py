@@ -7,7 +7,7 @@ import re
 import math
 
 def isEdgeImage(image: np.ndarray):
-    return np.amin(image)[0] == 0:
+    return np.amin(image)[0] == 0
 
 def isGoodQuality(image: np.ndarray):
     df = getImageStats(image, out_print=False)
@@ -58,17 +58,10 @@ if __name__ == "__main__":
         ax.imshow(resize(image, (image.shape[0] // 5, image.shape[1] // 5),anti_aliasing=True))
         ax.set_title(re.findall(r'Slide\d+-\d+-\d+', to_plot[k])[0]  + "-"  + re.findall(r'tile\d+', to_plot[k])[0])
         ax.axis("off")
-
-    # fig, axs = plt.subplots(1,len(wrong_bad_images))
-    # for i,path in enumerate(wrong_bad_images):
-    #     image = io.imread(path)
-    #     axs[i].imshow((resize(image, (image.shape[0] // 5, image.shape[1] // 5),anti_aliasing=True)))
-    # for ax in axs:
-    #     ax.axis("off")
-    # shift subplots down:
     st.set_y(0.95)
     fig.subplots_adjust(top=0.85)
     plt.show()
+
 
 
     # Confusion matrix

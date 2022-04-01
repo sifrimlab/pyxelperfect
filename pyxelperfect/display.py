@@ -62,6 +62,6 @@ def evaluateRegistration(ref_image, target_image, registered_target, identifier:
         plt.show()
 
 if __name__ == '__main__':
-    # io.imsave("composite_registered.tif",createComposite("/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_normal_HE_minus_cmc_10X_processed_before_reg.tif","/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_DLC1_processed_registered.tif"))
-    evaluateRegistration("/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_normal_HE_minus_cmc_10X_processed_before_reg.tif","/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_DLC1_processed_before_reg.tif" ,"/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_DLC1_processed_registered.tif", plot=True)
-    # showImage("./composite.tif")
+    io.imsave("composite_registered.tif",createComposite("/home/david/.config/nnn/mounts/nacho@10.38.76.144/tool/prostate_cancer/david_test/PWB950_cancer/affine_registered/PWB950_cancer_HE_minus_cmc_10X_processed.tif", "/home/david/.config/nnn/mounts/nacho@10.38.76.144/tool/prostate_cancer/david_test/PWB950_cancer/affine_registered/PWB950_DLC2_affine_registered.tif"))
+    # evaluateRegistration("/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_normal_HE_minus_cmc_10X_processed_before_reg.tif","/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_DLC1_processed_before_reg.tif" ,"/home/david/Documents/prostate_cancer/out/affine+bspline/929_normal/PWB929_DLC1_processed_registered.tif", plot=True)
+    # showImage("./composite_registered.tif")
