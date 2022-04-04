@@ -122,3 +122,5 @@ def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int, out
         tileImage(padded_img,ydiv = ydiv, xdiv = xdiv, image_prefix = k)
     return xdiv, ydiv
 
+if __name__ == '__main__':
+    tile("/home/david/.config/nnn/mounts/nacho@10.38.76.144/tool/enteric_neurones/slidescanner_examples/Good/Slide2-2-2_Region0000_Channel647,555,488_Seq0017/Slide2-2-2_Region0000_Channel647,555,488_Seq0017_555.tif", 2000, 2000, out_dir = "/home/david/.config/nnn/mounts/nacho@10.38.76.144/tool/enteric_neurones/slidescanner_examples/Good/Slide2-2-2_Region0000_Channel647,555,488_Seq0017/Slide2-2-2_Region0000_Channel647,555,488_Seq0017_555_tiles/")

@@ -17,7 +17,7 @@ def isGoodQuality(image: np.ndarray):
         return False
     elif df["Otsu threshold"][0] < 0:
         return False
-    elif df["Laplace std"][0] < 0.001:
+    elif float(df["Laplace std"][0]) < 0.001:
         return False
     elif df["Otsu threshold"][0] < 100:
         return False 
@@ -40,8 +40,8 @@ if __name__ == "__main__":
     wrong_bad_images = [b for a, b in zip(correct_array, full_image_list) if not a and "bad" in b]
     wrong_good_images = [b for a, b in zip(correct_array, full_image_list) if not a and "good" in b]
 
-    to_plot = wrong_bad_images
-    title = "wrong_bad_images"
+    to_plot = wrong_good_images
+    title = "wrong_good_images"
     # Testing dynamic plotting
     tot = len(to_plot)
     cols = round(math.sqrt(tot))

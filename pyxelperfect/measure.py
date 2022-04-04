@@ -39,16 +39,3 @@ def measureLabeledImage(labeled_image: np.array, original_image: np.array = None
     attribute_df = pd.DataFrame(rows_list)
     return attribute_df
 
-if __name__ == "__main__":
-    from skimage import io
-    # image_path = "/media/gojira/MERFISH_datasets/download.brainimagelibrary.org/02/26/02265ddb0dae51de/mouse1_sample2_raw/extracted_aligned_images/aligned_images_tile101_DAPI.tiff"
-    # image = io.imread(image_path)
-    # label_image, attribute_df = otsuSegment(image)
-    # # plt.imshow(label_image)
-    # plt.show()
-    # print(attribute_df)
-    labeled_image = io.imread("/home/david/Documents/prostate_cancer/cv2labeled_img.tif")
-    df = measureLabeledImage(labeled_image)
-    df.to_csv("/home/david/Documents/prostate_cancer/cv2labeled.csv")
-
-

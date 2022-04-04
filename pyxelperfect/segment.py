@@ -139,18 +139,4 @@ def cellPoseSegment(img: np.array, model:str = "nuclei", channels: np.array = [0
     model = models.Cellpose(gpu=False, model_type=model)
     masks, flows, styles, diams = model.eval(img, diameter=None, channels=channels)
     return masks
-    
-
-
-
-
-if __name__ == "__main__":
-    image_path = "/home/david/Documents/phd/teaching/IBS_project/original_imgs/1391_C109_40X_BSA5_1_only_DAPI.tif"
-    image = io.imread(image_path)
-    label_image = stardistSegment(image)
-    # io.imsave("label_image.tif", label_image)
-    showSegmentation(label_image, image, save=False, plot=True)
-    # plt.imshow(label_image)
-    # plt.show()
-    # print(attribute_df)
 

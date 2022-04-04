@@ -118,17 +118,6 @@ def compareImageStats(glob_pattern: str = None, result_prefix = "result", add_pr
     # merged_df = reduce(lambda x, y: pd.merge(x, y, on = 'Attribute'), df_list)
     merged_df = pd.concat(df_list)
     merged_df = merged_df.sort_index() # sort for readability
-    merged_df.to_html(f"{result_prefix}.html")
+    merged_df.to_csv(f"{result_prefix}.csv")
     return merged_df
         
-
-
-if __name__ == '__main__':
-    # image = io.imread("/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/Slide2-2-2_Region0000_Channel647,555,488_Seq0017_c1_z0_tile14.tif")
-    # getImageStats(image, out_print = True)
-    image_list = [io.imread(f"/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/Slide2-2-2_Region0000_Channel647,555,488_Seq0017_c1_z0_tile{i}tif") for i in range(1, 20)]
-    # compareImageStats(glob_pattern = "/media/tool/enteric_neurones/slidescanner_examples/Good/processed_Slide2-2-2_Region0000_Channel647,555,488_Seq0017/*tile*.tif")
-
-
-
-    

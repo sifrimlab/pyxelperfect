@@ -60,12 +60,3 @@ def equalizeImageSize(ref_image: np.array, target_image: np.array, save = False,
         io.imsave(f"{out_name}_resized.tif", target_resized)
     return target_resized
 
-
-if __name__ == "__main__":
-
-    # image = io.imread("/home/david/Documents/prostate_cancer/PWB929_normal_HE_minus_cmc_10X_grey.tif")
-    # image2 = io.imread("/home/david/Documents/prostate_cancer/PWB929_DLC1_grey_cropped.tif")
-    # equalizeImageSize(image, image2, save=True, out_name = "/home/david/Documents/prostate_cancer/PWB929_DLC1_grey_cropped")
-    
-    image = io.imsave("/home/david/Documents/prostate_cancer/testing_data/PWB929_DLC1_grey_resized_not_cropped.tif", resize(io.imread("/home/david/Documents/prostate_cancer/testing_data/PWB929_DLC1_grey.tif"), [2000,2000]))
-    

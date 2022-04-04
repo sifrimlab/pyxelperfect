@@ -6,20 +6,6 @@ from typing import List, Tuple
 import aicspylibczi
 from nd2reader import ND2Reader
 
-# ap = argparse.ArgumentParser(description="Extract tif from an image and count neurons and ganglia.")
-# ap.add_argument('file_path',type=str,help="Path (relative or absolute) to target image")
-# ap.add_argument('-o', '--out_dir', type=str, help="Root directory where output should be stored, default is base dir of the input image")
-# ap.add_argument('-c', '--c_number', default=0, type=int, help="indexes (start at 0) of the channel contains the marker of interest. Default = 0.")
-
-
-# ap.add_argument('-i', '--shape_indexes', default=None, type=int, help="index (start at 0) of the z-stack that needs to be extracted.")
-# ap.add_argument('-t', '--tile_size', default=None, type=int, nargs=2, help="Tuple representing targetted tile size (X-Y). Example: `-t 2000 2000`. Default is no tiling behaviour")
-
-# args = ap.parse_args()
-# # if no out_dir is given, take the base dir of the input image
-# if args.out_dir is None:
-#     args.out_dir = os.path.dirname(args.file_path)
-
 def getMostInFocusImage(image_array_list: List[np.array]) -> Tuple[np.array, int]:  
     """Gets most in focus image and its index from a list of image-arrays.
 
@@ -143,12 +129,3 @@ def extractSingleImages(image: str or np.ndarray, indexes_dict: dict, image_type
                 for channel_index in channel_indexes:
                     extracted_image = images.get_frame_2D(c=channel_index)
                     io.imsave(f"{os.path.splitext(filename)[0]}_i{shape_index}_c{channel_index}.tif", extracted_image)
-
-
-if __name__ == '__main__':
-    # image, img_type, img_shape = readImage("/home/david/Documents/enteric_neuron_tools/data/Slide2-1-2_Channel647,555,488_Seq0008.nd2")
-    # test_dict = {'c':[0,1,2]}
-    # extractSingleImages(image, test_dict, img_type, filename="/home/david/Documents/enteric_neuron_tools/data/Slide2-1-2_Channel647,555,488_Seq0008.nd2")
-
-    with ND2Reader(image) as image:
-        test_img = image.get_frame_2D(c=0, t=0)
