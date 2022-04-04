@@ -6,7 +6,7 @@ import pandas as pd
 import glob
 from skimage.filters import laplace
 from skimage.util import dtype_limits
-from threshold import otsuThreshold
+from .threshold import otsuThreshold
 from typing import List, Dict
 
 import PIL # this is needed to read in the giant images with skimage.io.read_collection

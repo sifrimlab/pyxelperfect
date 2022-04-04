@@ -4,7 +4,6 @@ from skimage import io
 import numpy as np
 from skimage.util import img_as_ubyte
 from skimage import color
-import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 

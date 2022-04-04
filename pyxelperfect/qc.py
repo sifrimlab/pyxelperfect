@@ -2,7 +2,7 @@ import numpy as np
 from skimage import io
 from skimage.transform import resize
 from glob import glob
-from diagnose import getImageStats
+from .diagnose import getImageStats
 import re
 import math
 
