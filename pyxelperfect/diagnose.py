@@ -104,11 +104,13 @@ def compareImageStats(glob_pattern: str = None, result_prefix = "result", add_pr
     pd.DataFrame
 
     """
-    # if glob_pattern is None and image_list is None:
-    #     raise TypeError("Function requires either glob_pattern or image_list to be given, not both.") 
     
+    if isinstance(glob_pattern, list):
+        image_path_list = glob_pattern
+    else:
+        image_path_list = glob.glob(glob_pattern)
     
-    name_image_dict = {os.path.basename(file): io.imread(file) for file in glob.glob(glob_pattern)}
+    name_image_dict = {os.path.basename(file): io.imread(file) for file in image_path_list}
     # image_list = io.imread_collection(glob_pattern)
 
     df_list  = []
