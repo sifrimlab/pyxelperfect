@@ -7,6 +7,8 @@ from skimage import io
 
 # Automatic brightness and contrast optimization with optional histogram clipping
 def automaticBrightnessAndContrast(image: np.array, clip_hist_percent: int =1):
+    if np.amin(image) == 0 and np.amax(image) == 0:
+        return image, 0, 0
     if len(image.shape) > 2:
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     else: 
@@ -27,19 +29,26 @@ def automaticBrightnessAndContrast(image: np.array, clip_hist_percent: int =1):
     clip_hist_percent *= (maximum/100.0)
     clip_hist_percent /= 2.0
     
-    # Locate left cut
-    minimum_gray = 0
-    while accumulator[minimum_gray] < clip_hist_percent:
-        minimum_gray += 1
+    try:
+        # Locate left cut
+        minimum_gray = 0
+        while accumulator[minimum_gray] < clip_hist_percent:
+            minimum_gray += 1
+        
+        # Locate right cut
+        maximum_gray = hist_size -1
+        while accumulator[maximum_gray] >= (maximum - clip_hist_percent):
+            maximum_gray -= 1
+    except:
+        return image, 0, 0
     
-    # Locate right cut
-    maximum_gray = hist_size -1
-    while accumulator[maximum_gray] >= (maximum - clip_hist_percent):
-        maximum_gray -= 1
-    
+    # If the image was empty, the alpha calculation will raise an error, so just return the original image
+    if maximum_gray - minimum_gray == 0:
+        return image, 0, 0
     # Calculate alpha and beta values
     alpha = 255 / (maximum_gray - minimum_gray)
     beta = -minimum_gray * alpha
+
     
     '''
     # Calculate new histogram with desired range and show histogram 
