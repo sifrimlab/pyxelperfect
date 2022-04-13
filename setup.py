@@ -14,6 +14,9 @@ with version_file.open() as f:
 with readme_file.open(encoding = "utf-8") as f:
     long_description = f.read()
 
+extras_require = {
+        "tensor": ["tensorflow","csbdeep","stardist","cellpose"]
+}
 setuptools.setup(
     name = "pyxelperfect",
     version = __version__,
@@ -42,12 +45,9 @@ setuptools.setup(
         "tifffile",
         "tabulate",
         "nd2reader",
-        "stardist",
-        "csbdeep",
-        "tensorflow",
         "SimpleITK",
-        "cellpose",
     ],
+    extras_require=extras_require,
     classifiers = [
         "Development Status :: 3 - Alpha",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
