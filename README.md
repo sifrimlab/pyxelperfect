@@ -16,6 +16,11 @@ This python package is available from pypi:
 ```python
 pip install pyxelperfect
 ```
+For tensorflow powered functionality (e.g.: Stardist and cellpose segmentation) install additional requirements:
+
+```python
+pip install pyxelperfect[tensor]
+```
 
 ## Documentation
 **Under construction**
