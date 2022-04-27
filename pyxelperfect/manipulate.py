@@ -5,6 +5,11 @@ from skimage.util import img_as_uint
 from skimage import io
 
 
+# testing imports
+import matplotlib.pyplot as plt
+from skimage.draw import ellipse
+
+
 # Automatic brightness and contrast optimization with optional histogram clipping
 def automaticBrightnessAndContrast(image: np.array, clip_hist_percent: int =1):
     if np.amin(image) == 0 and np.amax(image) == 0:
@@ -63,9 +68,29 @@ def automaticBrightnessAndContrast(image: np.array, clip_hist_percent: int =1):
     return (auto_result, alpha, beta)
 
 def equalizeImageSize(ref_image: np.array, target_image: np.array, save = False, out_name = "") -> np.array:
+    # Gross ifelse statement to check if one of the image is globally larger or smaller than the other
+    ref_shape, target_shape = ref_image.shape, target_image.shape
+    # if (ref_shape[0] > target_shape[0] and ref_shape[1] < target_shape[1]) or (target_shape[0] > ref_shape[0] and target_shape[1] < ref_shape[1]):
+    #     return ref_image, target_image
+    # else:
     target_resized = resize(target_image,ref_image.shape)
     target_resized = img_as_uint(target_resized)
     if save and out_name:
         io.imsave(f"{out_name}_resized.tif", target_resized)
-    return target_resized
+    return ref_image, target_resized
+
+if __name__ == '__main__':
+    ref_image = np.zeros((1600,500), dtype=np.uint)
+    ref_image[ellipse(800,250, 700, 100)] = 255
+    target_image = np.zeros((1000,1000), dtype=np.uint)
+    target_image[ellipse(500,500, 400,200)] = 255
+
+    warped_ref_image, warped_target_image = equalizeImageSize(ref_image, target_image)
+
+    fig, axs = plt.subplots(2,2)
+    axs[0,0].imshow(ref_image)
+    axs[0,1].imshow(target_image)
+    axs[1,0].imshow(warped_ref_image)
+    axs[1,1].imshow(warped_target_image)
+    plt.show()
 
