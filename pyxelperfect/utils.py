@@ -1,4 +1,5 @@
 import numpy as np
+
 def getPatch(arr, idx, radius=3, fill=None):
     """
     Gets surrounding elements from a numpy array
@@ -30,7 +31,7 @@ def getPatch(arr, idx, radius=3, fill=None):
             continue
 
         r = radius[axis]
-                l = idx[axis] - r
+        l = idx[axis] - r
         r = idx[axis] + r
 
         pl = 0 if l > 0 else abs(l)
@@ -42,5 +43,23 @@ def getPatch(arr, idx, radius=3, fill=None):
     if fill is None:
         return arr[tuple(slices)]
     return np.pad(arr[tuple(slices)], paddings, 'constant', constant_values=fill)
+
+def getLastDimensions(array, nr_dims: int = 2):
+    """Extracts last X dimensions from an array
+
+    Parameters
+    ----------
+    array :
+        input array to be extracted
+    nr_dims : int
+        nr of dimensions to extract. Default = 2 
+    """
+    if array.ndim <= nr_dims:
+        return array
+    if nr_dims > nr_dims:
+        raise ValueError(f"Requested nr of dimensions {nr_dims} higher than nr of dimensions present in array.")
+    slc = [0] * (array.ndim - nr_dims)
+    slc += [slice(None) for i in range(0, nr_dims)]
+    return array[tuple(slc)]
 
 
