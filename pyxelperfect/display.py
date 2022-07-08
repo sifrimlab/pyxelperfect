@@ -5,6 +5,7 @@ import numpy as np
 from skimage.util import img_as_ubyte
 from skimage import color
 import numpy as np
+from .manipulate import automaticBrightnessAndContrast
 import cv2
 
 def showSegmentation(labeled_image: np.array, original_image: np.array = None, save=True, plot=False):
@@ -60,5 +61,3 @@ def evaluateRegistration(ref_image, target_image, registered_target, identifier:
         axs[1].legend(handles=[red_patch, green_patch_2])
         plt.show()
 
-if __name__ == '__main__':
-    io.imsave("composite_registered.tif",createComposite("/home/david/.config/nnn/mounts/nacho@10.38.76.144/tool/prostate_cancer/david_test/PWB950_cancer/affine_registered/PWB950_cancer_HE_minus_cmc_10X_processed.tif", "/home/david/.config/nnn/mounts/nacho@10.38.76.144/tool/prostate_cancer/david_test/PWB950_cancer/affine_registered/PWB950_DLC2_affine_registered.tif"))

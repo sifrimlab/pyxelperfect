@@ -84,8 +84,8 @@ def extractMostInFocusZstack(image: np.ndarray, z_shape_index:int = -1) -> np.nd
     img_list = []
     for i in range(image.shape[z_shape_index]):
         img_list.append(np.take(image, i, z_shape_index))
-    mostInFocusImage = getMostInFocusImage(img_list)
-    return mostInFocusImage
+    mostInFocusImage, index = getMostInFocusImage(img_list)
+    return mostInFocusImage, index
 
 
 

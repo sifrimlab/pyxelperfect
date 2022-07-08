@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from skimage.transform import resize
+from skimage.morphology import white_tophat, disk
 from skimage.util import img_as_uint
 from skimage import io
 
@@ -45,11 +46,11 @@ def automaticBrightnessAndContrast(image: np.array, clip_hist_percent: int =1):
         while accumulator[maximum_gray] >= (maximum - clip_hist_percent):
             maximum_gray -= 1
     except:
-        return image, 0, 0
+        return image
     
     # If the image was empty, the alpha calculation will raise an error, so just return the original image
     if maximum_gray - minimum_gray == 0:
-        return image, 0, 0
+        return image
     # Calculate alpha and beta values
     alpha = 255 / (maximum_gray - minimum_gray)
     beta = -minimum_gray * alpha
@@ -65,7 +66,7 @@ def automaticBrightnessAndContrast(image: np.array, clip_hist_percent: int =1):
     '''
 
     auto_result = cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
-    return (auto_result, alpha, beta)
+    return auto_result
 
 def equalizeImageSize(ref_image: np.array, target_image: np.array, save = False, out_name = "") -> np.array:
     # Gross ifelse statement to check if one of the image is globally larger or smaller than the other
@@ -78,6 +79,47 @@ def equalizeImageSize(ref_image: np.array, target_image: np.array, save = False,
     if save and out_name:
         io.imsave(f"{out_name}_resized.tif", target_resized)
     return ref_image, target_resized
+
+def whiteTophat(image, radius):
+    """Wrapper for skimage's white tophat filter
+
+    Parameters
+    ----------
+    image : np.ndarray
+        Image to be filtered.
+    radius: int
+        Radius of the morphological disk.
+    """
+    selem = disk(radius)
+    return white_tophat(image,selem)
+
+def changeRGBcolor(image, original_color, target_color):
+    """ Change a specific color in an image to another color
+
+    Parameters
+    ----------
+    image :
+        input image
+    original_color :
+        tuple representing the rgb color to change
+    target_color :
+        tuple representing the rgb color to change to 
+    """
+    image = image.copy()
+    if len(image.shape) > 3:
+        raise ValueError("not an RGB image")
+    if image.shape[2] > 3:
+        image = image[:,:,0:3]
+    # print(image[:,:,0])
+    r1, g1, b1 = original_color
+    r2, g2, b2 = target_color
+
+    red, green, blue = image[:,:,0], image[:,:,1], image[:,:,2]
+    mask = (red == r1) & (green == g1) & (blue == b1)
+    image[:,:,:3][mask] = [r2, g2, b2]
+    return image
+
+    # io.imsave("./image_fixed.png", data, check_contrast=False)
 
 if __name__ == '__main__':
     ref_image = np.zeros((1600,500), dtype=np.uint)
