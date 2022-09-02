@@ -18,9 +18,19 @@ def showSegmentation(labeled_image: np.array, original_image: np.array = None, s
         io.imsave("labeled_image.tif", colored_image_on_DAPI)
 
     if plot:
-        plt.imshow(colored_image_on_DAPI)
-        plt.axis("off")
-        plt.show()
+        if original_image is not None:
+            fig, axs = plt.subplots(1,2)
+            axs[0].imshow(original_image)
+            axs[1].imshow(labeled_image)
+            plt.axis("off")
+            plt.show()
+
+        else:
+            plt.imshow(colored_image_on_DAPI)
+            plt.axis("off")
+            plt.show()
+
+
 
 def showImage(image: np.array):
     plt.imshow(image)
