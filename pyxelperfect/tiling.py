@@ -75,16 +75,13 @@ def padImage(image: np.array, target_full_rows: int, target_full_columns: int) -
     padded_img = np.pad(image, ((0, rowdiff), (0, columndiff)))
     return padded_img
 
-def padCoordinateDf(df, target_full_rows, target_full_columns, original_resolution, rowname="row", colname="col"):
-    row_diff = (target_full_rows - original_resolution[0] )  / 2
-    col_diff = (target_full_columns - original_resolution[1] )  / 2
+def padCoordinateDf(df, grid, rowname="row", colname="col"):
+    row_diff = (grid.n_rows - grid.original_resolution[0] )  / 2
+    col_diff = (grid.n_cols - grid.original_resolution[1] )  / 2
 
     df[rowname] = df[rowname] + row_diff
     df[colname] = df[colname] + col_diff
     return df
-
-
-
 
 def tileImage(image: np.ndarray, rowdiv: int, coldiv: int, image_prefix: str="image_tile_"):
     """Tile an image into smaller tiles based on divisions in x and y axes, and saving them to tif files.
@@ -149,13 +146,15 @@ def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int, out
 
 class tileGrid:
     ## Tile naming starts at 1
-    def __init__(self, rowdiv, coldiv, n_rows, n_cols, image_list = []):
+    def __init__(self, rowdiv, coldiv, n_rows, n_cols, original_resolution, image_list = [], data_coordinates_list=[]):
         # basic vars
         self.n_rows = n_rows
         self.n_cols = n_cols
         self.coldiv = int( coldiv )
         self.rowdiv = int( rowdiv )
+        self.original_resolution = original_resolution
         self.image_list = image_list
+        self.data_coordinates_list = data_coordinates_list
 
         # calculated stuff
         self.tile_size_row =int(  n_rows / rowdiv )
@@ -183,33 +182,79 @@ class tileGrid:
         plt.imshow(self.image_list[image_nr][self.tile_boundaries[tile_nr]])
         plt.show()
 
+    def addDataCoordinates(self, data_df):
+        self.data_coordinates_list.append(data_df)
 
-# def getTileGridStats(rowdiv, coldiv, n_rows,n_cols ):
-#     grid = {name:value for name, value in locals().items()}
-    # grid["tile_size_row"] = n_rows / rowdiv
-    # grid["tile_size_col"] = n_cols / coldiv
-    # grid["n_tiles"] = grid["rowdiv"] * grid["coldiv"] 
-    # # Make a variable that contains all bounds 
-    # grid["tile_bounds"] = []
-    # return grid
+    def getTileDataCoordinates(self, tile_nr, data_index=0,rowname="row", colname="col"):
+        df = self.data_coordinates_list[data_index]
+        padded_df = self._padCoordinateDf(df)
+        cropped_df = self._cropCoordinateDf(df, tile_nr)
+        return cropped_df
+
+    def _padCoordinateDf(self, df, rowname="row", colname="col"):
+        row_diff = (self.n_rows - self.original_resolution[0] )  / 2
+        col_diff = (self.n_cols - self.original_resolution[1] )  / 2
+
+        df[rowname] = df[rowname] + row_diff
+        df[colname] = df[colname] + col_diff
+        return df
+
+    def _cropCoordinateDf(self, df, tile_nr, rowname="row", colname="col"):
+        row_slice, col_slice =  self.tile_boundaries[tile_nr][0], self.tile_boundaries[tile_nr][1]
+
+        df = df.loc[(df[rowname] > row_slice.start) & (df[rowname] <= row_slice.stop)]
+        cropped_df = df.loc[(df[colname] > col_slice.start) & (df[colname] <= col_slice.stop)]
+        return cropped_df 
+    def __str__(self):
+        return f"Tile grid of size {self.rowdiv} by {self.coldiv}, {self.n_tiles} in total. \n {self.tile_grid}"
 
 
-def tileCoordinateTable(df, rowdiv, coldiv, target_full_rows, target_full_columns, original_resolution):
-    grid = getTileGridStats(rowdiv, coldiv, target_full_rows, target_full_columns)
-    df = padCoordinateDf(df, target_full_rows, target_full_columns, original_resolution)
-    #TODO implement actual tile coordinate boxing using the grid object
-    # for i in range()
+def tileCoordinateDf(df, grid, tile_nr = None, rowname="row", colname="col"):
+    df = padCoordinateDf(df, grid)
+    if isinstance(tile_nr, int):
+        row_slice, col_slice =  grid.tile_boundaries[tile_nr][0], grid.tile_boundaries[tile_nr][1]
+
+        df = df.loc[(df[rowname] > row_slice.start) & (df[rowname] <= row_slice.stop)]
+        cropped_df = df.loc[(df[colname] > col_slice.start) & (df[colname] <= col_slice.stop)]
+        return cropped_df
+    else:
+        for i in range(1, grid.n_tiles +1):
+            row_slice, col_slice =  grid.tile_boundaries[i][0], grid.tile_boundaries[i][1]
+
+            cropped_df = df.loc[(df[rowname] > row_slice.start) & (df[rowname] <= row_slice.stop)]
+            cropped_df = cropped_df.loc[(cropped_df[colname] > col_slice.start) & (cropped_df[colname] <= col_slice.stop)]
+
+
+
+def plotdf(df, image):
+    for row in df.itertuples():
+        image[row.row, row.col] = row.col
+    plt.imshow(image)
+    plt.show()
     
 
 
 if __name__ == '__main__':
     # test_image = np.zeros((75663,114245),dtype=np.bool) 
     test_image = np.diagflat(range(100)) 
+    io.imsave("test_image.tif", test_image)
     # test_image =io.imread("/home/david/Documents/segmentation_benchmark/test_data/merfish/labeled1_MERFISH_nuclei.tif")
     # print(np.diagonal(test_image))
     # test_image[np.diagonal(test_image)] = range(100)
     test_df = pd.read_csv("./test_df.csv")
-    rowdiv, coldiv, target_full_rows, target_full_columns = tile(test_image, 30, 30,calc_only=True)
-    grid = tileGrid(rowdiv, coldiv, target_full_rows, target_full_columns)
+    # plotdf(test_df, test_image)
+
+    rowdiv, coldiv, target_full_rows, target_full_columns = tile("./test_image.tif", 30, 30, out_dir = "./test_output/", calc_only = True)
+
+    grid = tileGrid(rowdiv, coldiv, target_full_rows, target_full_columns, test_image.shape)
+    grid.addDataCoordinates(test_df)
+    tile6_df = grid.getTileDataCoordinates(6)
+    plt.fig, axs = plt.subplots(1,2)
+    #TODO plot this correctly to verify 
+    axs[0].imshow(io.imread("./test_output/test_image_tile6.tif"))
+    tmp_image = np.zeros(( 120, 120 ))
+    for row in tile6_df.itertuples():
+        tmp_image[row.row, row.col] = row.col
+    axs[1].imshow(tmp_image)
+    plt.show()
     
-    # tileCoordinateTable(test_df, rowdiv, coldiv, target_full_rows, target_full_columns)
