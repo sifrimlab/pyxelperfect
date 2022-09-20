@@ -7,6 +7,7 @@ from skimage import color
 import numpy as np
 from .manipulate import automaticBrightnessAndContrast
 import cv2
+import pandas as pd
 
 def showSegmentation(labeled_image: np.array, original_image: np.array = None, save=True, plot=False):
     colored_image = color.label2rgb(labeled_image, bg_label=0)
@@ -70,4 +71,28 @@ def evaluateRegistration(ref_image, target_image, registered_target, identifier:
         green_patch_2 = mpatches.Patch(color='green', label='ST moved')
         axs[1].legend(handles=[red_patch, green_patch_2])
         plt.show()
+
+def plotSpatial(image, dataframe, rowname = "row", colname="col", dotsize=5, color="red", save=False, plot=True):
+
+    def get_cmap(n, name='hsv'):
+    ##Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
+    ##RGB color; the keyword argument name must be a standard mpl colormap name.
+        return plt.cm.get_cmap(name, n)
+
+    plt.imshow(image, cmap="gray")
+    if color in dataframe.columns:
+        unique_els = dataframe[color].unique()
+        cmap = get_cmap(len(unique_els))
+        for i, c in enumerate(unique_els):
+            tmp_df = dataframe[dataframe[color] == c]
+            plt.scatter(tmp_df[colname], tmp_df[rowname], color=cmap(i), s=dotsize)
+    else:
+        plt.scatter(dataframe[colname], dataframe[rowname], color=color, s=dotsize)
+
+    if save:
+        plt.savefig("spatial_plot.png")
+    if plot:
+        plt.show()
+
+    return plt
 
