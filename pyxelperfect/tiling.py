@@ -186,75 +186,55 @@ class tileGrid:
         self.data_coordinates_list.append(data_df)
 
     def getTileDataCoordinates(self, tile_nr, data_index=0,rowname="row", colname="col"):
+        """getTileDataCoordinates.
+
+        Parameters
+        ----------
+        tile_nr :
+            nr of tile to fetch coordinates from. (indexing starts at 1, not at 0)
+        data_index :
+            index of which dataframe to fetch, in case multiple dataframes are linked with the tiling coordinate. (indexing starts at 0)
+        rowname :
+            column name that refers to the row dimension
+        colname :
+            column name that refers to the col dimension
+        """
+
         df = self.data_coordinates_list[data_index]
-        padded_df = self._padCoordinateDf(df)
+        # padded_df = self._padCoordinateDf(df)
         cropped_df = self._cropCoordinateDf(df, tile_nr)
+
+        # Now we have all spots belonging to this tile, but we still need to add local coords to them
         return cropped_df
-
-    def _padCoordinateDf(self, df, rowname="row", colname="col"):
-        row_diff = (self.n_rows - self.original_resolution[0] )  / 2
-        col_diff = (self.n_cols - self.original_resolution[1] )  / 2
-
-        df[rowname] = df[rowname] + row_diff
-        df[colname] = df[colname] + col_diff
-        return df
 
     def _cropCoordinateDf(self, df, tile_nr, rowname="row", colname="col"):
         row_slice, col_slice =  self.tile_boundaries[tile_nr][0], self.tile_boundaries[tile_nr][1]
 
-        df = df.loc[(df[rowname] > row_slice.start) & (df[rowname] <= row_slice.stop)]
-        cropped_df = df.loc[(df[colname] > col_slice.start) & (df[colname] <= col_slice.stop)]
+        tmp_df = df.loc[(df[rowname] >= row_slice.start) & (df[rowname] < row_slice.stop)]
+        cropped_df = tmp_df.loc[(tmp_df[colname] > col_slice.start) & (tmp_df[colname] <= col_slice.stop)]
+
+        local_rows = [el - row_slice.start for el in cropped_df[rowname]]
+        local_cols = [el - col_slice.start for el in cropped_df[colname]]
+
+        # copy line added since assigning new columns to the normal cropped_df (which is technically a slice of the original df) raises a warning.
+        # In this usecase the warning is a false positive, since we don't care about tracing the new column back to the original dataframe
+        cropped_df = cropped_df.copy()
+        cropped_df["local_row"] = local_rows
+        cropped_df["local_col"] = local_cols
         return cropped_df 
+
     def __str__(self):
-        return f"Tile grid of size {self.rowdiv} by {self.coldiv}, {self.n_tiles} in total. \n {self.tile_grid}"
-
-
-def tileCoordinateDf(df, grid, tile_nr = None, rowname="row", colname="col"):
-    df = padCoordinateDf(df, grid)
-    if isinstance(tile_nr, int):
-        row_slice, col_slice =  grid.tile_boundaries[tile_nr][0], grid.tile_boundaries[tile_nr][1]
-
-        df = df.loc[(df[rowname] > row_slice.start) & (df[rowname] <= row_slice.stop)]
-        cropped_df = df.loc[(df[colname] > col_slice.start) & (df[colname] <= col_slice.stop)]
-        return cropped_df
-    else:
-        for i in range(1, grid.n_tiles +1):
-            row_slice, col_slice =  grid.tile_boundaries[i][0], grid.tile_boundaries[i][1]
-
-            cropped_df = df.loc[(df[rowname] > row_slice.start) & (df[rowname] <= row_slice.stop)]
-            cropped_df = cropped_df.loc[(cropped_df[colname] > col_slice.start) & (cropped_df[colname] <= col_slice.stop)]
-
-
-
-def plotdf(df, image):
-    for row in df.itertuples():
-        image[row.row, row.col] = row.col
-    plt.imshow(image)
-    plt.show()
-    
-
+        return f"Tile grid of size {self.rowdiv} by {self.coldiv}, {self.n_tiles} in total.\nTiles are {self.tile_size_row} rows by {self.tile_size_col} cols.\n {self.tile_grid}"
 
 if __name__ == '__main__':
-    # test_image = np.zeros((75663,114245),dtype=np.bool) 
-    test_image = np.diagflat(range(100)) 
-    io.imsave("test_image.tif", test_image)
-    # test_image =io.imread("/home/david/Documents/segmentation_benchmark/test_data/merfish/labeled1_MERFISH_nuclei.tif")
-    # print(np.diagonal(test_image))
-    # test_image[np.diagonal(test_image)] = range(100)
-    test_df = pd.read_csv("./test_df.csv")
-    # plotdf(test_df, test_image)
+    test_df = pd.read_csv("./test_input/own_decoded_intensities.csv")
 
-    rowdiv, coldiv, target_full_rows, target_full_columns = tile("./test_image.tif", 30, 30, out_dir = "./test_output/", calc_only = True)
+    rowdiv, coldiv, target_full_rows, target_full_columns = tile("./test_input/MERFISH_dapi2.tif", 500, 500, out_dir = "./test_output/", calc_only = True)
+    test_image = io.imread("./test_input/MERFISH_dapi2.tif")
 
     grid = tileGrid(rowdiv, coldiv, target_full_rows, target_full_columns, test_image.shape)
     grid.addDataCoordinates(test_df)
-    tile6_df = grid.getTileDataCoordinates(6)
-    plt.fig, axs = plt.subplots(1,2)
-    #TODO plot this correctly to verify 
-    axs[0].imshow(io.imread("./test_output/test_image_tile6.tif"))
-    tmp_image = np.zeros(( 120, 120 ))
-    for row in tile6_df.itertuples():
-        tmp_image[row.row, row.col] = row.col
-    axs[1].imshow(tmp_image)
-    plt.show()
-    
+
+    for i in range(1,grid.n_tiles + 1 ):
+        tmp_df = grid.getTileDataCoordinates(i)
+        tmp_df.to_csv(f"./test_output/data_coords_tile{i}.csv")
