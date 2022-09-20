@@ -37,7 +37,7 @@ setuptools.setup(
         "numpy",
         "tqdm",
         "scikit-image",
-        "opencv-python",
+        "opencv-python-headless",
         "pandas",
         "aicspylibczi",
         "matplotlib",
