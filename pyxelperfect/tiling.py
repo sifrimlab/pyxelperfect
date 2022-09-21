@@ -9,7 +9,7 @@ from skimage import io
 import glob
 import os
 
-def calculateOptimalLargestResolution(glob_pattern: str, target_tile_height: int, target_tile_width: int) -> List[int]: 
+def calculateOptimalLargestResolution(glob_pattern: str, target_tile_height: int, target_tile_width: int) -> Tuple[int]: 
     """Calculates the optimal maximum resolution based on a set of images assuming that it will be used to tile the images into equal tiles of a certain size, given by the input variables.
 
 
@@ -24,26 +24,32 @@ def calculateOptimalLargestResolution(glob_pattern: str, target_tile_height: int
 
     Returns
     -------
-    List[int]
+    Tuple[int]
 
     """
+    
+    def calcMaxes(images_array):
+        heights = []
+        widths = []
+        if len( images_array.shape ) > 2:
+            for i in range(len(images_array)):
+                heights.append(images_array[i].shape[0])
+                widths.append(images_array[i].shape[1])
+            max_rows = max(heights) 
+            max_columns = max(widths)
+        else:
+            max_rows=images_array.shape[0]
+            max_columns=images_array.shape[1]
+        return max_rows, max_columns
+
     if isinstance(glob_pattern, str):
         images_array = np.array(imread_collection(glob_pattern))
+        max_rows, max_columns = calcMaxes(images_array)
     elif isinstance(glob_pattern, np.ndarray):
         images_array = glob_pattern
-
-    heights = []
-    widths = []
-    if len( images_array.shape ) > 2:
-        for i in range(len(images_array)):
-            heights.append(images_array[i].shape[0])
-            widths.append(images_array[i].shape[1])
-        max_rows = max(heights) 
-        max_columns = max(widths)
-    else:
-        max_rows=images_array.shape[0]
-        max_columns=images_array.shape[1]
-
+        max_rows, max_columns = calcMaxes(images_array)
+    elif isinstance(glob_pattern, tuple):
+        max_rows, max_columns = glob_pattern
 
     rowdiv = np.ceil(max_rows / target_tile_height)
     coldiv = np.ceil(max_columns / target_tile_width)
@@ -74,14 +80,6 @@ def padImage(image: np.array, target_full_rows: int, target_full_columns: int) -
     columndiff = target_full_columns - image.shape[1]
     padded_img = np.pad(image, ((0, rowdiff), (0, columndiff)))
     return padded_img
-
-def padCoordinateDf(df, grid, rowname="row", colname="col"):
-    row_diff = (grid.n_rows - grid.original_resolution[0] )  / 2
-    col_diff = (grid.n_cols - grid.original_resolution[1] )  / 2
-
-    df[rowname] = df[rowname] + row_diff
-    df[colname] = df[colname] + col_diff
-    return df
 
 def tileImage(image: np.ndarray, rowdiv: int, coldiv: int, image_prefix: str="image_tile_"):
     """Tile an image into smaller tiles based on divisions in x and y axes, and saving them to tif files.
@@ -118,6 +116,10 @@ def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int, out
         Width of the tiles
     target_tile_height : int
         Height of the tiles
+    calc_only: bool
+        If true, only calculates the padded image size and number of tiles in both dimensions, without creating the tiles. 
+        Output can be used to create a tileGrid object. 
+        
 
     Returns
     -------
@@ -145,27 +147,30 @@ def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int, out
     return rowdiv,coldiv, target_full_rows, target_full_columns
 
 class tileGrid:
-    ## Tile naming starts at 1
+    """ Class to represent the tiling grid of the tile function
+
+    Important for usage: tile names start at indexin 1, so for self.tile_boundaries (which is a dict), keys start at 1
+    """
     def __init__(self, rowdiv, coldiv, n_rows, n_cols, original_resolution, image_list = [], data_coordinates_list=[]):
         # basic vars
-        self.n_rows = n_rows
-        self.n_cols = n_cols
-        self.coldiv = int( coldiv )
-        self.rowdiv = int( rowdiv )
-        self.original_resolution = original_resolution
-        self.image_list = image_list
-        self.data_coordinates_list = data_coordinates_list
+        self.n_rows = n_rows # Number rows in the complete array, untiled
+        self.n_cols = n_cols # Number cols in the complete array, untiled
+        self.coldiv = int( coldiv ) # Number of tiles in the col-dimension
+        self.rowdiv = int( rowdiv ) # Number of tiles in the row dimension
+        self.original_resolution = original_resolution # tuple, resolution of the original image, before padding
+        self.image_list = image_list # List of images of the original image-stack ,in case the tiling tiles more than 1 image in unison
+        self.data_coordinates_list = data_coordinates_list # List of potential dataframes with point coordinates, such as spatial transcriptomics
 
         # calculated stuff
-        self.tile_size_row =int(  n_rows / rowdiv )
-        self.tile_size_col =int(  n_cols / coldiv )
-        self.n_tiles =int(rowdiv * coldiv)
+        self.tile_size_row =int(  n_rows / rowdiv ) # Size of each individual tile in row dimension
+        self.tile_size_col =int(  n_cols / coldiv ) # Size of each individual tile in col dimension
+        self.n_tiles = int(rowdiv * coldiv) # total number of tiles created
 
         # numerical representation of the tiles
-        self.tile_grid = np.arange(1, self.n_tiles + 1).reshape(self.rowdiv, self.coldiv)
+        self.tile_grid = np.arange(1, self.n_tiles + 1).reshape(self.rowdiv, self.coldiv) # representation of the tile grid in numbers, for if you want to search for the position of a specific tile
 
         # Calculate boundaries of tiles
-        self.tile_boundaries = {}
+        self.tile_boundaries = {} # Dict that stores the boundaries of the tiles (with respect to the padded image, not the original)
 
         # start at one to make the boundary math check out
         for i in range(1, self.n_tiles + 1):
@@ -187,6 +192,7 @@ class tileGrid:
 
     def getTileDataCoordinates(self, tile_nr, data_index=0,rowname="row", colname="col"):
         """getTileDataCoordinates.
+        Note to self: because padding happens only at the end of the dimensions, it's not included in the tiling of coordinates, since their coordinate is the same relative to the padded image.
 
         Parameters
         ----------
@@ -201,10 +207,8 @@ class tileGrid:
         """
 
         df = self.data_coordinates_list[data_index]
-        # padded_df = self._padCoordinateDf(df)
-        cropped_df = self._cropCoordinateDf(df, tile_nr)
+        cropped_df = self._cropCoordinateDf(df, tile_nr, rowname=rowname, colname=colname)
 
-        # Now we have all spots belonging to this tile, but we still need to add local coords to them
         return cropped_df
 
     def _cropCoordinateDf(self, df, tile_nr, rowname="row", colname="col"):
