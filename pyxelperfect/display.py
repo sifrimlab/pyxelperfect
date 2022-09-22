@@ -9,7 +9,7 @@ from .manipulate import automaticBrightnessAndContrast
 import cv2
 import pandas as pd
 
-def showSegmentation(labeled_image: np.array, original_image: np.array = None, save=True, plot=False):
+def showSegmentation(labeled_image: np.array, original_image: np.array = None, save=False, plot=True):
     colored_image = color.label2rgb(labeled_image, bg_label=0)
     if original_image is not None:
         original_image = img_as_ubyte(original_image)
