@@ -186,6 +186,8 @@ class tileGrid:
     def plotTile(self, tile_nr = 1, image_nr = 0):
         plt.imshow(self.image_list[image_nr][self.tile_boundaries[tile_nr]])
         plt.show()
+    def getTile(self, tile_nr = 1, image_nr = 0):
+        return self.image_list[image_nr][self.tile_boundaries[tile_nr]]
 
     def addDataCoordinates(self, data_df):
         self.data_coordinates_list.append(data_df)
