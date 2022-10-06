@@ -232,15 +232,133 @@ class tileGrid:
     def __str__(self):
         return f"Tile grid of size {self.rowdiv} by {self.coldiv}, {self.n_tiles} in total.\nTiles are {self.tile_size_row} rows by {self.tile_size_col} cols.\n {self.tile_grid}"
 
-if __name__ == '__main__':
-    test_df = pd.read_csv("./test_input/own_decoded_intensities.csv")
+class tileBorder:
+''' Class to represent the border of a tile. Requires the labeled image of that tile for initialization, since this class is meant to compare
+{orientation: {(row,col): label} }
+'''
+    def __init__(self, labeled_image:np.ndarray, tile_nr:int=0):
+        self.labeled_image = labeled_image
 
-    rowdiv, coldiv, target_full_rows, target_full_columns = tile("./test_input/MERFISH_dapi2.tif", 500, 500, out_dir = "./test_output/", calc_only = True)
-    test_image = io.imread("./test_input/MERFISH_dapi2.tif")
+        self.border_mask = self._getArrayBorder(self.labeled_image)
+        tmp_list = list( np.unique(self.labeled_image[self.border_mask]))
+        # Remove 0, which is background, not an actual label
+        tmp_list.remove(0)
+        self.border_labels = tmp_list 
+        self.nr_border_objects = len(self.border_labels)
 
-    grid = tileGrid(rowdiv, coldiv, target_full_rows, target_full_columns, test_image.shape)
-    grid.addDataCoordinates(test_df)
+        ## only for in-class use
+        self._barDict = {"left": self.labeled_image[:, 0], "top": self.labeled_image[0, :], "right" : self.labeled_image[:, -1], "bot": self.labeled_image[-1, :]}
 
-    for i in range(1,grid.n_tiles + 1 ):
-        tmp_df = grid.getTileDataCoordinates(i)
-        tmp_df.to_csv(f"./test_output/data_coords_tile{i}.csv")
+        self.orientation_label_centers = self._getLabelCentersPerOrientation()
+
+        if tile_nr != 0:
+            self.tile_nr = tile_nr
+
+    def _getLabelCentersPerOrientation(self):
+        '''
+        Creates a dict represention of at which border is each label, in what its center is.
+
+        returns: {orientation: {(row,col): label} }  with orientation either top, right, left of bot
+        '''
+        orientation_dict = {}
+        for orientation, bar  in self._barDict.items():
+            labels = list(np.unique(bar))
+            labels.remove(0)
+            orientation_dict[orientation] = {}
+            for label in labels:
+                label_indexes = np.where(bar == label)[0]
+                middle = label_indexes[round(len(label_indexes)/2)]
+                orientation_dict[orientation][middle] = label
+        return orientation_dict
+
+    def _getArrayBorder(self,image):
+        mask = np.ones(image.shape, dtype = bool)
+        mask[image.ndim * (slice(1, -1), )] = False
+        return mask
+
+    def __eq__(self, other):
+        return self.tile_nr == other.tile_nr
+
+    def __lt__(self, other):
+        return self.tile_nr < other.tile_nr
+
+    def __gt__(self, other):
+        return self.tile_nr > other.tile_nr
+
+    def plotBorderCenters(self):
+        plt.imshow(self.labeled_image)
+        for k, v in self.orientation_label_centers["left"].items():
+            plt.scatter(0,k)
+        for k, v in self.orientation_label_centers["top"].items():
+            plt.scatter(k,0)
+        for k, v in self.orientation_label_centers["right"].items():
+            plt.scatter((self.labeled_image).shape[1]-1,k)
+        for k, v in self.orientation_label_centers["bot"].items():
+            plt.scatter(k,(self.labeled_image).shape[0]-1)
+        plt.show()
+
+    def matchTileBorders(self, tileBorder2, tile_grid: tileGrid):
+        ## we take the smaller number as viewpoint, which means it will be bordering the other tile 
+        ref, other = (self, tileBorder2) if self < tileBorder2 else (tileBorder2, self)
+
+        # if other is next to this one, look right to left
+        if other.tile_nr == (ref.tile_nr + 1):
+            ref_border = "right"
+            other_border = "left"
+        # if other is one row further, look bot to top
+        elif other.tile_nr == (ref.tile_nr + tile_grid.coldiv):
+            ref_border = "bot"
+            other_border = "top"
+        else:
+            return {}
+
+        labels_matching_dict = {} # this will store mapping from labels ref to other
+
+        center_dict = ref.orientation_label_centers[ref_border]
+        if center_dict:
+            for ref_key in center_dict.keys():
+                other_key_array = np.array(list(other.orientation_label_centers[other_border].keys()))
+                # build in an error margin since rounding errors are possible on the center detection
+                matching_label = other.orientation_label_centers[other_border][other_key_array[np.where((other_key_array >= (ref_key - 3)) & (other_key_array <= (ref_key + 3)))][0]]
+                labels_matching_dict[center_dict[ref_key]] = matching_label
+
+        return labels_matching_dict
+
+    def __str__(self):
+        return f"Borders of tile {self.tile_nr}. {self.nr_border_objects} unique objects at borders."
+
+
+def plotLabeledImageOverlap(labeled_image_paths, tile_grid):
+    """Plots labeled images of a tile grid in the correct axis, with overlapping labels as their title
+    Pure for visualization of the tileBorder class
+    """
+
+    r = re.compile(r"tile(\d+)")
+    def key_func(m):
+        return int(r.search(m).group(1))
+    labeled_image_paths.sort(key=key_func)
+    print(labeled_image_paths)
+
+    fig, axs = plt.subplots(tile_grid.rowdiv, tile_grid.coldiv)
+    axs = axs.flatten()
+    for i in range(1,tile_grid.n_tiles + 1):
+        img = io.imread(labeled_image_paths[i-1])
+    
+        tile = tileBorder(img, i)
+        try:
+            img2 =  io.imread(labeled_image_paths[i])
+            tile2 = tileBorder(img2, i+1)
+            tile2_matches = tile.matchTileBorders(tile2, tile_grid)
+        except:
+            tile2_matches = {}
+        try:
+            img3 =  io.imread(labeled_image_paths[i + tile_grid.coldiv - 1])
+            tile3 = tileBorder(img3, i+tile_grid.coldiv)
+            tile3_matches = tile.matchTileBorders(tile3, tile_grid)
+        except:
+            tile3_matches = {}
+            
+        axs[i-1].imshow(img)
+        axs[i-1].set_title(f"with {i+1}: {list(tile2_matches.keys())} ; with {i + tile_grid.coldiv}: {list(tile3_matches.keys())}")
+
+    plt.show()
