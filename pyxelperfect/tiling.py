@@ -147,12 +147,11 @@ def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int, out
     return rowdiv,coldiv, target_full_rows, target_full_columns
 
 class tileGrid:
-    """ Class to represent the tiling grid of the tile function
-
-    Important for usage: tile names start at indexin 1, so for self.tile_boundaries (which is a dict), keys start at 1
-    """
+    # """ Class to represent the tiling grid of the tile function
+    # Important for usage: tile names start at indexin 1, so for self.tile_boundaries (which is a dict), keys start at 1
+    # """
     def __init__(self, rowdiv, coldiv, n_rows, n_cols, original_resolution, image_list = [], data_coordinates_list=[]):
-        # basic vars
+# basic vars
         self.n_rows = n_rows # Number rows in the complete array, untiled
         self.n_cols = n_cols # Number cols in the complete array, untiled
         self.coldiv = int( coldiv ) # Number of tiles in the col-dimension
@@ -172,7 +171,7 @@ class tileGrid:
         # Calculate boundaries of tiles
         self.tile_boundaries = {} # Dict that stores the boundaries of the tiles (with respect to the padded image, not the original)
 
-        # start at one to make the boundary math check out
+# start at one to make the boundary math check out
         for i in range(1, self.n_tiles + 1):
             idx = np.where(self.tile_grid == i)
             self.tile_boundaries[i] = np.s_[idx[0][0] * self.tile_size_row : (idx[0][0] + 1) * self.tile_size_row, idx[1][0] * self.tile_size_col: (idx[1][0] + 1) * self.tile_size_col]
@@ -223,7 +222,7 @@ class tileGrid:
         local_cols = [el - col_slice.start for el in cropped_df[colname]]
 
         # copy line added since assigning new columns to the normal cropped_df (which is technically a slice of the original df) raises a warning.
-        # In this usecase the warning is a false positive, since we don't care about tracing the new column back to the original dataframe
+# In this usecase the warning is a false positive, since we don't care about tracing the new column back to the original dataframe
         cropped_df = cropped_df.copy()
         cropped_df["local_row"] = local_rows
         cropped_df["local_col"] = local_cols
@@ -233,9 +232,9 @@ class tileGrid:
         return f"Tile grid of size {self.rowdiv} by {self.coldiv}, {self.n_tiles} in total.\nTiles are {self.tile_size_row} rows by {self.tile_size_col} cols.\n {self.tile_grid}"
 
 class tileBorder:
-''' Class to represent the border of a tile. Requires the labeled image of that tile for initialization, since this class is meant to compare
-{orientation: {(row,col): label} }
-'''
+    """ Class to represent the border of a tile. Requires the labeled image of that tile for initialization, since this class is meant to compare
+    {orientation: {(row,col): label} }
+    """
     def __init__(self, labeled_image:np.ndarray, tile_nr:int=0):
         self.labeled_image = labeled_image
 
@@ -255,11 +254,11 @@ class tileBorder:
             self.tile_nr = tile_nr
 
     def _getLabelCentersPerOrientation(self):
-        '''
+        """ 
         Creates a dict represention of at which border is each label, in what its center is.
 
         returns: {orientation: {(row,col): label} }  with orientation either top, right, left of bot
-        '''
+        """ 
         orientation_dict = {}
         for orientation, bar  in self._barDict.items():
             labels = list(np.unique(bar))
@@ -314,9 +313,11 @@ class tileBorder:
 
         labels_matching_dict = {} # this will store mapping from labels ref to other
 
+        # get all centers of the ref
         center_dict = ref.orientation_label_centers[ref_border]
-        if center_dict:
+        if center_dict: # if there are any
             for ref_key in center_dict.keys():
+                # for each one, check which centers there are on the other border border 
                 other_key_array = np.array(list(other.orientation_label_centers[other_border].keys()))
                 # build in an error margin since rounding errors are possible on the center detection
                 matching_label = other.orientation_label_centers[other_border][other_key_array[np.where((other_key_array >= (ref_key - 3)) & (other_key_array <= (ref_key + 3)))][0]]
