@@ -1,13 +1,15 @@
-from skimage.io import imread_collection, imsave, imread
-import numpy as np
-from tifffile import imsave
-import pandas as pd
-import matplotlib.pyplot as plt
-
-from typing import List, Tuple
-from skimage import io
-import glob
 import os
+import glob
+import numpy as np
+import pandas as pd
+from skimage import io
+from tifffile import imsave
+from typing import List, Tuple
+import matplotlib.pyplot as plt
+from .measure import measureLabeledImage
+from skimage.io import imread_collection, imsave, imread
+
+
 
 def calculateOptimalLargestResolution(glob_pattern: str, target_tile_height: int, target_tile_width: int) -> Tuple[int]: 
     """Calculates the optimal maximum resolution based on a set of images assuming that it will be used to tile the images into equal tiles of a certain size, given by the input variables.
@@ -132,7 +134,8 @@ def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int, out
     target_full_rows, target_full_columns, rowdiv, coldiv = calculateOptimalLargestResolution(glob_pattern, target_tile_height, target_tile_width)
 
     if calc_only:
-        return rowdiv, coldiv, target_full_rows, target_full_columns
+        grid = tileGrid(rowdiv, coldiv, target_full_rows, target_full_columns)
+        return grid
 
     padded_imgs = {}
     if not out_dir:
@@ -144,21 +147,23 @@ def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int, out
 
     for k, padded_img in padded_imgs.items():
         tileImage(padded_img,rowdiv = rowdiv, coldiv = coldiv, image_prefix = k)
+    grid = tileGrid(rowdiv, coldiv, target_full_rows, target_full_columns)
     return rowdiv,coldiv, target_full_rows, target_full_columns
 
 class tileGrid:
     # """ Class to represent the tiling grid of the tile function
     # Important for usage: tile names start at indexin 1, so for self.tile_boundaries (which is a dict), keys start at 1
+    # image list and data coordinates are there to be able to tile them after the fact
     # """
-    def __init__(self, rowdiv, coldiv, n_rows, n_cols, original_resolution, image_list = [], data_coordinates_list=[]):
+    def __init__(self, rowdiv, coldiv, n_rows, n_cols, image_list = [], data_coordinates_list=[], tiles={}):
 # basic vars
         self.n_rows = n_rows # Number rows in the complete array, untiled
         self.n_cols = n_cols # Number cols in the complete array, untiled
         self.coldiv = int( coldiv ) # Number of tiles in the col-dimension
         self.rowdiv = int( rowdiv ) # Number of tiles in the row dimension
-        self.original_resolution = original_resolution # tuple, resolution of the original image, before padding
         self.image_list = image_list # List of images of the original image-stack ,in case the tiling tiles more than 1 image in unison
         self.data_coordinates_list = data_coordinates_list # List of potential dataframes with point coordinates, such as spatial transcriptomics
+        self.tiles = tiles
 
         # calculated stuff
         self.tile_size_row =int(  n_rows / rowdiv ) # Size of each individual tile in row dimension
@@ -170,22 +175,25 @@ class tileGrid:
 
         # Calculate boundaries of tiles
         self.tile_boundaries = {} # Dict that stores the boundaries of the tiles (with respect to the padded image, not the original)
-
-# start at one to make the boundary math check out
+        # start at one to make the boundary math check out
         for i in range(1, self.n_tiles + 1):
             idx = np.where(self.tile_grid == i)
             self.tile_boundaries[i] = np.s_[idx[0][0] * self.tile_size_row : (idx[0][0] + 1) * self.tile_size_row, idx[1][0] * self.tile_size_col: (idx[1][0] + 1) * self.tile_size_col]
 
-    def getTileGrid(self):
-        print(self.tile_grid)
-
     def addImage(self, image: np.ndarray):
         self.image_list.append(image)
 
-    def plotTile(self, tile_nr = 1, image_nr = 0):
+    def addTile(self, tile: Tile):
+        self.tiles[tile.tile_nr] = tile
+
+    def getTile(self, tile_nr):
+        return self.tiles[tile_nr]
+
+    def plotImageTile(self, tile_nr = 1, image_nr = 0):
         plt.imshow(self.image_list[image_nr][self.tile_boundaries[tile_nr]])
         plt.show()
-    def getTile(self, tile_nr = 1, image_nr = 0):
+
+    def getImageTile(self, tile_nr = 1, image_nr = 0):
         return self.image_list[image_nr][self.tile_boundaries[tile_nr]]
 
     def addDataCoordinates(self, data_df):
@@ -296,18 +304,19 @@ class tileBorder:
             plt.scatter(k,(self.labeled_image).shape[0]-1)
         plt.show()
 
-    def matchTileBorders(self, tileBorder2, tile_grid: tileGrid):
-        ## we take the smaller number as viewpoint, which means it will be bordering the other tile 
-        ref, other = (self, tileBorder2) if self < tileBorder2 else (tileBorder2, self)
+    def matchTileBorders(self, tileBorder2, tile_grid: tileGrid, error_margin = 5):
+        ## we take the largest number as viewpoint, which means it will be bordering the other tile 
+        ref, other = (self, tileBorder2) if self > tileBorder2 else (tileBorder2, self)
+        # print(ref.orientation_label_centers, other.orientation_label_centers)
 
         # if other is next to this one, look right to left
-        if other.tile_nr == (ref.tile_nr + 1):
-            ref_border = "right"
-            other_border = "left"
+        if other.tile_nr == (ref.tile_nr - 1):
+            ref_border = "left"
+            other_border = "right"
         # if other is one row further, look bot to top
-        elif other.tile_nr == (ref.tile_nr + tile_grid.coldiv):
-            ref_border = "bot"
-            other_border = "top"
+        elif other.tile_nr == (ref.tile_nr - tile_grid.coldiv):
+            ref_border = "top"
+            other_border = "bot"
         else:
             return {}
 
@@ -320,13 +329,130 @@ class tileBorder:
                 # for each one, check which centers there are on the other border border 
                 other_key_array = np.array(list(other.orientation_label_centers[other_border].keys()))
                 # build in an error margin since rounding errors are possible on the center detection
-                matching_label = other.orientation_label_centers[other_border][other_key_array[np.where((other_key_array >= (ref_key - 3)) & (other_key_array <= (ref_key + 3)))][0]]
+                matching_label = other.orientation_label_centers[other_border][other_key_array[np.where((other_key_array >= (ref_key - error_margin)) & (other_key_array <= (ref_key + error_margin)))][0]]
                 labels_matching_dict[center_dict[ref_key]] = matching_label
 
         return labels_matching_dict
 
     def __str__(self):
         return f"Borders of tile {self.tile_nr}. {self.nr_border_objects} unique objects at borders."
+
+
+
+class Tile:
+    def __init__(self, labeled_image, detected_genes_df, measured_df, grid, tile_nr):
+        self.labeled_image = labeled_image
+        self.detected_genes_df = detected_genes_df
+        self.grid = grid
+        self.measured_df = measured_df
+        self.tile_nr = tile_nr
+
+    def getGenesOfLabel(self, label):
+        gene_dict = {} # keys = label integers, values = dict{gene: count}
+        gene_dict[label] = {}
+
+        for row in self.detected_genes_df.itertuples():
+            try:
+                this_label = self.labeled_image[row.local_row, row.local_col]
+            except IndexError:
+                continue
+            if label == this_label:
+                gene_dict[label][row.Gene] = gene_dict[label].get(row.Gene, 0) + 1 
+        return gene_dict
+
+    
+    def createCountMatrix(self, left_tile: tileBorder = None, top_tile: tileBorder = None):
+
+        # utility function to concat the gene lists of two labels
+        def concatGeneDicts(ref_gene_dict, target_gene_dict, ref_label, target_label):
+            # iterate over target and add their counts to the ref
+            for gene, count in target_gene_dict[target_label].items():
+                ref_gene_dict[ref_label][gene] = ref_gene_dict[ref_label].get(gene, 0) + count 
+
+        # Actual count matrix creation, including getting the counts from top and left
+        def assignGenesToSpots(labeled_image, decoded_df):
+            # First get all genes for this tile
+            gene_dict = {} # keys = label integers, values = dict{gene: count}
+            n_labels = np.unique(labeled_image)
+            for label in n_labels:
+                gene_dict[label] = {}
+            for row in decoded_df.itertuples():
+                try:
+                    label = labeled_image[row.local_row, row.local_col]
+                    if label != 0:
+                        gene_dict[label][row.Gene] = gene_dict[label].get(row.Gene, 0) + 1 
+                except:
+                    pass
+
+            this_border = self.getTileBorder()
+            # then get genes of the tile to the left
+            if left_tile is not None:
+                left_border = left_tile.getTileBorder()
+                left_matches = this_border.matchTileBorders(left_border, self.grid)
+
+                for this_label, left_label in left_matches.items():
+                    left_gene_dict = left_tile.getGenesOfLabel(left_label)
+                    concatGeneDicts(gene_dict, left_gene_dict, this_label, left_label)
+
+
+            if top_tile is not None:
+                top_border = top_tile.getTileBorder()
+                top_matches = this_border.matchTileBorders(top_border, self.grid)
+
+                for this_label, top_label in top_matches.items():
+                    top_gene_dict = top_tile.getGenesOfLabel(top_label)
+                    concatGeneDicts(gene_dict, top_gene_dict, this_label, top_label)
+
+            return gene_dict
+
+        gene_dict = assignGenesToSpots(self.labeled_image, self.detected_genes_df)
+
+        gene_dict_list = [gene_dict[i] for i in sorted(gene_dict.keys())]
+
+        keys = set().union(*gene_dict_list)
+        final = {k: [d.get(k, 0) for d in gene_dict_list] for k in keys}
+
+        count_matrix = pd.DataFrame(final)
+
+        return count_matrix
+
+
+    def getTileBorder(self):
+        return tileBorder(self.labeled_image, self.tile_nr)
+
+
+if __name__ == '__main__':
+    for i in range(1,grid.n_tiles+1):
+        # grid.getTileDataCoordinates(i, rowname="y", colname="x").to_csv(f"./out_dir/merfish_decoded_genes_tile{i}.csv")
+        with open("./out_dir/tile_grid.pickle", 'rb') as f:
+            grid = pickle.load(f)
+        img = io.imread(f"./out_dir/labeled1_MERFISH_nuclei_tile{i}.tif")
+        df = pd.read_csv(f"./out_dir/merfish_decoded_genes_tile{i}.csv")
+        measured_df = pd.read_csv(f"./out_dir/labeled1_MERFISH_nuclei_measured_tile{i}.csv")
+        tile = Tile(img, df, measured_df, grid, i)
+
+        try:
+            img1 = io.imread(f"./out_dir/labeled1_MERFISH_nuclei_tile{i-1}.tif")
+            df1 = pd.read_csv(f"./out_dir/merfish_decoded_genes_tile{i-1}.csv")
+            measured_df1 = pd.read_csv(f"./out_dir/labeled1_MERFISH_nuclei_measured_tile{i-1}.csv")
+            tile1 = Tile(img1, df1, measured_df, grid, i-1)
+        except:
+            tile1=None
+
+        try:
+            img2 = io.imread(f"./out_dir/labeled1_MERFISH_nuclei_tile{i - grid.coldiv}.tif")
+            df2 = pd.read_csv(f"./out_dir/merfish_decoded_genes_tile{i - grid.coldiv}.csv")
+            measured_df2 = pd.read_csv(f"./out_dir/labeled1_MERFISH_nuclei_measured_tile{i - grid.coldiv}.csv")
+            tile2 = Tile(img2, df2, measured_df, grid, i-grid.coldiv)
+        except:
+            tile2 = None
+
+        count_matrix = tile.createCountMatrix(tile1, tile2)
+        print(count_matrix)
+        
+
+
+
 
 
 def plotLabeledImageOverlap(labeled_image_paths, tile_grid):
