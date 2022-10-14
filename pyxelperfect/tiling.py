@@ -261,6 +261,7 @@ class tileBorder:
         tmp_list.remove(0)
         self.border_labels = tmp_list 
         self.nr_border_objects = len(self.border_labels)
+        self.tile_nr = tile_nr
 
         ## only for in-class use
         self._barDict = {"left": self.labeled_image[:, 0], "top": self.labeled_image[0, :], "right" : self.labeled_image[:, -1], "bot": self.labeled_image[-1, :]}
