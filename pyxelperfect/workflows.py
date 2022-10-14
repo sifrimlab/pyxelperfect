@@ -1,17 +1,18 @@
 import os
-import SimpleITK as sitk
-import pandas as pd
 import cv2 as cv
 import numpy as np
+import pandas as pd
 from skimage import io
-from skimage.color import rgb2gray
-from skimage.util import invert,img_as_ubyte, img_as_uint
-from skimage.transform import rotate
+import SimpleITK as sitk
 import matplotlib.pyplot as plt
+from skimage.color import rgb2gray
+from skimage.transform import rotate
+from .decorators import measureTime
+from .measure import measureLabeledImage
 from .manipulate import equalizeImageSize
 from .register import performRegistration
-from .measure import measureLabeledImage
-from .decorators import measureTime
+from .tiling import tileGrid, Tile
+from skimage.util import invert,img_as_ubyte, img_as_uint
 
 
 def expandBbox(bbox, size: int):
@@ -203,3 +204,32 @@ def ST_to_MSI_registration(fixed_path: str, moving_path:str):
     return moving_bspline_resampled, final_transform
 
 
+
+def assignGenesToAllTiles(image_base_name, measured_base_name, detected_genes_base_name, grid: tileGrid, out_dir = "./"):
+    '''
+    base name being something tile merfish_registered_tile
+    '''
+    for i in range(1, grid.n_tiles + 1):
+        img = io.imread(f"{image_base_name}{i}.tif")
+        df = pd.read_csv(f"{detected_genes_base_name}{i}.csv")
+        measured_df = pd.read_csv(f"{measured_base_name}{i}.csv")
+        tile = Tile(img, df, measured_df, grid, i)
+
+        try:
+            img1 = io.imread(f"{image_base_name}{i-1}.tif")
+            df1 = pd.read_csv(f"{detected_genes_base_name}{i-1}.csv")
+            measured_df1 = pd.read_csv(f"{measured_base_name}{i-1}.csv")
+            tile1 = Tile(img1, df1, measured_df1, grid, i-1)
+        except:
+            tile1 = None
+
+        try:
+            img2 = io.imread(f"{image_base_name}{i- tile.coldiv}.tif")
+            df2 = pd.read_csv(f"{detected_genes_base_name}{i-tile.coldiv}.csv")
+            measured_df2 = pd.read_csv(f"{measured_base_name}{i-tile.coldiv}.csv")
+            tile2 = Tile(img2, df2, measured_df2, grid2, i- tile.coldiv)
+        except:
+            tile2 = None
+
+        count_matrix = tile.createCountMatrix(tile1, tile2)
+        count_matrix.to_csv(os.path.join(out_dir, f"{os.path.basename(image_base_name)}{i}_countmatrix.csv"))

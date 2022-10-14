@@ -6,8 +6,8 @@ from skimage import io
 from tifffile import imsave
 from typing import List, Tuple
 import matplotlib.pyplot as plt
-from .measure import measureLabeledImage
 from skimage.io import imread_collection, imsave, imread
+
 
 
 
@@ -183,7 +183,7 @@ class tileGrid:
     def addImage(self, image: np.ndarray):
         self.image_list.append(image)
 
-    def addTile(self, tile: Tile):
+    def addTile(self, tile: "Tile"):
         self.tiles[tile.tile_nr] = tile
 
     def getTile(self, tile_nr):
@@ -238,6 +238,15 @@ class tileGrid:
 
     def __str__(self):
         return f"Tile grid of size {self.rowdiv} by {self.coldiv}, {self.n_tiles} in total.\nTiles are {self.tile_size_row} rows by {self.tile_size_col} cols.\n {self.tile_grid}"
+
+    def getNeighbouringTiles(self, tile_nr):
+        flattened_grid = self.tile_grid.flatten()
+        idx = np.argwhere(self.tile_grid == tile_nr)[0]
+        left = tile_nr - 1 if (tile_nr - 1  in flattened_grid) and (idx[1] !=  0) else None
+        right =  tile_nr + 1 if (tile_nr + 1 in flattened_grid) and (idx[1] != self.coldiv - 1) else None
+        top =  tile_nr - self.coldiv if (tile_nr - self.coldiv in flattened_grid) and (idx[0] != 0) else None
+        bot =  tile_nr + self.coldiv if (tile_nr + self.coldiv in flattened_grid) and (idx[0] != self.rowdiv-1) else None
+        return {"left": left, "top": top, "bot": bot, "right": right}
 
 class tileBorder:
     """ Class to represent the border of a tile. Requires the labeled image of that tile for initialization, since this class is meant to compare
@@ -304,7 +313,7 @@ class tileBorder:
             plt.scatter(k,(self.labeled_image).shape[0]-1)
         plt.show()
 
-    def matchTileBorders(self, tileBorder2, tile_grid: tileGrid, error_margin = 5):
+    def matchTileBorders(self, tileBorder2, tile_grid: "tileGrid", error_margin = 5):
         ## we take the largest number as viewpoint, which means it will be bordering the other tile 
         ref, other = (self, tileBorder2) if self > tileBorder2 else (tileBorder2, self)
         # print(ref.orientation_label_centers, other.orientation_label_centers)
@@ -339,6 +348,7 @@ class tileBorder:
 
 
 
+
 class Tile:
     def __init__(self, labeled_image, detected_genes_df, measured_df, grid, tile_nr):
         self.labeled_image = labeled_image
@@ -361,7 +371,7 @@ class Tile:
         return gene_dict
 
     
-    def createCountMatrix(self, left_tile: tileBorder = None, top_tile: tileBorder = None):
+    def createCountMatrix(self, left_tile: "tileBorder" = None, top_tile: "tileBorder" = None):
 
         # utility function to concat the gene lists of two labels
         def concatGeneDicts(ref_gene_dict, target_gene_dict, ref_label, target_label):
@@ -421,40 +431,6 @@ class Tile:
         return tileBorder(self.labeled_image, self.tile_nr)
 
 
-if __name__ == '__main__':
-    for i in range(1,grid.n_tiles+1):
-        # grid.getTileDataCoordinates(i, rowname="y", colname="x").to_csv(f"./out_dir/merfish_decoded_genes_tile{i}.csv")
-        with open("./out_dir/tile_grid.pickle", 'rb') as f:
-            grid = pickle.load(f)
-        img = io.imread(f"./out_dir/labeled1_MERFISH_nuclei_tile{i}.tif")
-        df = pd.read_csv(f"./out_dir/merfish_decoded_genes_tile{i}.csv")
-        measured_df = pd.read_csv(f"./out_dir/labeled1_MERFISH_nuclei_measured_tile{i}.csv")
-        tile = Tile(img, df, measured_df, grid, i)
-
-        try:
-            img1 = io.imread(f"./out_dir/labeled1_MERFISH_nuclei_tile{i-1}.tif")
-            df1 = pd.read_csv(f"./out_dir/merfish_decoded_genes_tile{i-1}.csv")
-            measured_df1 = pd.read_csv(f"./out_dir/labeled1_MERFISH_nuclei_measured_tile{i-1}.csv")
-            tile1 = Tile(img1, df1, measured_df, grid, i-1)
-        except:
-            tile1=None
-
-        try:
-            img2 = io.imread(f"./out_dir/labeled1_MERFISH_nuclei_tile{i - grid.coldiv}.tif")
-            df2 = pd.read_csv(f"./out_dir/merfish_decoded_genes_tile{i - grid.coldiv}.csv")
-            measured_df2 = pd.read_csv(f"./out_dir/labeled1_MERFISH_nuclei_measured_tile{i - grid.coldiv}.csv")
-            tile2 = Tile(img2, df2, measured_df, grid, i-grid.coldiv)
-        except:
-            tile2 = None
-
-        count_matrix = tile.createCountMatrix(tile1, tile2)
-        print(count_matrix)
-        
-
-
-
-
-
 def plotLabeledImageOverlap(labeled_image_paths, tile_grid):
     """Plots labeled images of a tile grid in the correct axis, with overlapping labels as their title
     Pure for visualization of the tileBorder class
@@ -489,3 +465,8 @@ def plotLabeledImageOverlap(labeled_image_paths, tile_grid):
         axs[i-1].set_title(f"with {i+1}: {list(tile2_matches.keys())} ; with {i + tile_grid.coldiv}: {list(tile3_matches.keys())}")
 
     plt.show()
+
+if __name__ == '__main__':
+    grid = tileGrid(4,4,2048,2048)
+    grid.getNeighbouringTiles(2)
+

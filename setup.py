@@ -46,6 +46,7 @@ setuptools.setup(
         "tabulate",
         "nd2reader",
         "SimpleITK",
+        "joblib",
     ],
     extras_require=extras_require,
     classifiers = [
