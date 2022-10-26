@@ -1,5 +1,6 @@
 import os
 import glob
+import re
 import numpy as np
 import pandas as pd
 from skimage import io
@@ -463,11 +464,15 @@ def plotLabeledImageOverlap(labeled_image_paths, tile_grid):
             tile3_matches = {}
             
         axs[i-1].imshow(img)
-        axs[i-1].set_title(f"with {i+1}: {list(tile2_matches.keys())} ; with {i + tile_grid.coldiv}: {list(tile3_matches.keys())}")
+        # axs[i-1].set_title(f"with {i+1}: {list(tile2_matches.keys())} ; with {i + tile_grid.coldiv}: {list(tile3_matches.keys())}")
+        axs[i-1].set_xticks([])
+        axs[i-1].set_yticks([])
 
     plt.show()
 
 if __name__ == '__main__':
     grid = tileGrid(4,4,2048,2048)
-    grid.getNeighbouringTiles(2)
+    # grid.getNeighbouringTiles(2)
+
+    plotLabeledImageOverlap(glob.glob("../out_dir/labeled1_MERFISH_nuclei_tile*.tif"), grid)
 
