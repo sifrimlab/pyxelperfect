@@ -152,6 +152,10 @@ def isolateSingleCellsFromTile(measured_df_basename: str , image_basename: str, 
         # plt.imshow(bb)
         # plt.show()
 
+def findCenter(x_shape):
+    middle = x_shape[0] / 2, x_shape[1] / 2
+    return middle
+
 if __name__ == '__main__':
     # import pickle
     from tiling import tileGrid
