@@ -9,7 +9,7 @@ from .manipulate import automaticBrightnessAndContrast
 import cv2
 import pandas as pd
 
-def showSegmentation(labeled_image: np.array, original_image: np.array = None, save=False, plot=True):
+def showSegmentation(labeled_image: np.array, original_image: np.array = None, save=False, plot=True, overlay=False):
     colored_image = color.label2rgb(labeled_image, bg_label=0)
     if original_image is not None:
         original_image = img_as_ubyte(original_image)
@@ -20,11 +20,14 @@ def showSegmentation(labeled_image: np.array, original_image: np.array = None, s
 
     if plot:
         if original_image is not None:
-            fig, axs = plt.subplots(1,2)
-            axs[0].imshow(original_image)
-            axs[1].imshow(labeled_image)
-            plt.axis("off")
-            plt.show()
+            if not overlay:
+                fig, axs = plt.subplots(1,2)
+                axs[0].imshow(original_image)
+                axs[1].imshow(colored_image_on_DAPI)
+                plt.axis("off")
+                plt.show()
+            elif overlay:
+                plotBoundaries(labeled_image, original_image)
 
         else:
             plt.imshow(colored_image_on_DAPI)
@@ -35,6 +38,17 @@ def showSegmentation(labeled_image: np.array, original_image: np.array = None, s
 
 def showImage(image: np.array):
     plt.imshow(image)
+    plt.axis("off")
+    plt.show()
+
+def createOverlay(labeled_image, image):
+    max_val = np.amax(image) 
+    tmp_image = image.copy()
+    tmp_image[find_boundaries(labeled_image)] = max_val
+    return tmp_image
+
+def plotBoundaries(labeled_image,,image):
+    plt.imshow(createOverlay(image, labeled_image))
     plt.axis("off")
     plt.show()
 

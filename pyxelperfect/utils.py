@@ -1,11 +1,12 @@
+import re
 import numpy as np
 from pathlib import Path
 from skimage import io
 import pandas as pd
 
 #tmp
-import matplotlib.pyplot as plt
-from tiling import tileBorder
+# import matplotlib.pyplot as plt
+# from tiling import tileBorder
 
 def getPatch(arr, idx, radius=3, fill=None):
     """
@@ -152,12 +153,21 @@ def isolateSingleCellsFromTile(measured_df_basename: str , image_basename: str, 
         # plt.imshow(bb)
         # plt.show()
 
+def sortByRegex(target_list, regex):
+    r = re.compile(rf"{regex}")
+    def key_func(m):
+        return int(r.search(m).group(1))
+
+    target_list.sort(key=key_func)
+    return target_list
+
 if __name__ == '__main__':
     # import pickle
-    from tiling import tileGrid
-    image_basename = "../out_dir/labeled1_MERFISH_nuclei_tile"
-    measured_basename = "../out_dir/labeled1_MERFISH_nuclei_measured_tile"
-    # with open("../out_dir/tile_grid.pickle", 'rb') as f:
-    #     grid = pickle.load(f)
-    grid = tileGrid(4,4,2048, 2048)
-    isolateSingleCellsFromTile(measured_basename, image_basename, grid, 14, out_dir = "../out_dir/isolated_images/")
+    pass
+    # from tiling import tileGrid
+    # image_basename = "../out_dir/labeled1_MERFISH_nuclei_tile"
+    # measured_basename = "../out_dir/labeled1_MERFISH_nuclei_measured_tile"
+    # # with open("../out_dir/tile_grid.pickle", 'rb') as f:
+    # #     grid = pickle.load(f)
+    # grid = tileGrid(4,4,2048, 2048)
+    # isolateSingleCellsFromTile(measured_basename, image_basename, grid, 14, out_dir = "../out_dir/isolated_images/")
