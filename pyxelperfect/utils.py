@@ -161,6 +161,10 @@ def sortByRegex(target_list, regex):
     target_list.sort(key=key_func)
     return target_list
 
+def findCenter(x_shape):
+    middle = x_shape[0] / 2, x_shape[1] / 2
+    return middle
+
 if __name__ == '__main__':
     # import pickle
     pass
