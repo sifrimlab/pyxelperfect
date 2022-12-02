@@ -19,11 +19,11 @@ def measureLabeledImage(labeled_image: np.array, original_image: np.array = None
     rows_list=[]
     for region_props in regions:
         attribute_dict = {}
-        center_y, center_x= region_props['centroid']
+        center_row, center_col= region_props['centroid']
         attribute_dict['image_label'] =region_props['Label']
-        attribute_dict['cell_label'] = f"X{int(center_x)}_Y{int(center_y)}_{region_props['Label']}"
-        attribute_dict['center_X'] = int(center_x)
-        attribute_dict['center_Y'] = int(center_y)
+        attribute_dict['cell_label'] = f"row{int(center_row)}_col{int(center_col)}_{region_props['Label']}"
+        attribute_dict['center_row'] = int(center_row)
+        attribute_dict['center_col'] = int(center_col)
         for i,prop in enumerate(propList):
             if(prop == 'Area') and pixels_to_um != 0: 
                 attribute_dict['real_area'] = region_props[prop]*pixels_to_um**2

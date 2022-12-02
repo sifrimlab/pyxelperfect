@@ -21,7 +21,7 @@ def showSegmentation(labeled_image: np.array, original_image: np.array = None, s
     if plot:
         if original_image is not None:
             if not overlay:
-                fig, axs = plt.subplots(1,2)
+                fig, axs = plt.subplots(1,2, sharex=True, sharey=True)
                 axs[0].imshow(original_image)
                 axs[1].imshow(colored_image_on_DAPI)
                 plt.axis("off")
