@@ -433,6 +433,30 @@ class Tile:
         return tileBorder(self.labeled_image, self.tile_nr)
 
 
+def mergeLabeledTiles(labeled_image_paths, tile_grid):
+    """
+    This is used after segmenting tiles seperately since the whole dapi won't fit into memory.
+    """
+    from skimage.measure import label
+    r = re.compile(r"tile(\d+)")
+    def key_func(m):
+        return int(r.search(m).group(1))
+    labeled_image_paths.sort(key=key_func)
+
+
+    empty = np.zeros((int(grid.n_rows), int(grid.n_cols)), np.uint)
+
+    # enumerate starting from one cause tile counts start at 1
+    for tile_path in labeled_image_paths:
+        tile_nr = int(re.findall('\d+', re.findall('tile\d+', tile_path)[0])[0])
+        tile = io.imread(tile_path)
+        empty[grid.tile_boundaries[tile_nr]] = tile
+
+#     convert all labels back into a mask so that we can label it again
+    empty[empty != 0] = 1
+    labeled_image = label(empty, background = 0)
+    return labeled_image
+
 def plotLabeledImageOverlap(labeled_image_paths, tile_grid):
     """Plots labeled images of a tile grid in the correct axis, with overlapping labels as their title
     Pure for visualization of the tileBorder class
