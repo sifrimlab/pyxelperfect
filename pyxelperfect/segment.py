@@ -107,7 +107,7 @@ def stardistSegment(img: np.array, model:str = "2D_versatile_fluo") -> np.array:
     labeled_image, details = model_versatile.predict_instances(img_normalized)
     return labeled_image 
 
-def cellPoseSegment(img: np.array, model:str = "nuclei", channels: np.array = [0,0], diameter=None) -> np.array:
+def cellPoseSegment(img: np.array, model:str = "nuclei", channels: np.array = [0,0], diameter=None, gpu=True) -> np.array:
     """Segments cells using pretrained Cellpose models. Can do both cytoplasm and nuclei at the same time.
 
     Parameters
@@ -136,7 +136,7 @@ def cellPoseSegment(img: np.array, model:str = "nuclei", channels: np.array = [0
 
     """
     # model_type='cyto' or model_type='nuclei'
-    model = models.Cellpose(gpu=False, model_type=model)
+    model = models.Cellpose(gpu=gpu, model_type=model)
     masks, flows, styles, diams = model.eval(img, diameter=diameter, channels=channels)
     return masks
 

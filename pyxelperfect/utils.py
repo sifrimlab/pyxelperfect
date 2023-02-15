@@ -127,31 +127,34 @@ def isolateSingleCellsFromTile(measured_df_basename: str , image_basename: str, 
 
         return new_row, new_col
 
-    # Check which labels shouldn't be included in this iteration of isolation (so those left and top)
-    #TODO
+    # Check which labels shouldn't be included in this iteration of isolation (so those bot and right)
     middle_border = tileBorder(middle_tile, tile_nr)
-    print(middle_border.orientation_label_centers)
 
+    # Take the list of the labels of objects that are located on the bottom and right border 
+    labels_to_leave_out = (*middle_border.orientation_label_centers["bot"].values(), *middle_border.orientation_label_centers["right"].values())
 
-    # plt.imshow(middle_tile)
+    #TODO last step: align centers for new_row, new_col, it doesn't work perfectly
+
     # # then we can loop over the df and extract the images from the enlarged image
-    # for i,row in enumerate(measured_df.itertuples()):
-    #     X = row.center_X
-    #     Y = row.center_Y
-    #     new_row, new_col = adaptCoordsOfMiddleTile(Y, X)
-    #     bb = getPatch(empty, (new_row,new_col), radius = (149,149), fill=0)
-        # io.imsave(regular_dir / f"{image_prefix}cell{i}.tif", bb)
-    #     if labeled_image is not None:
-    #         labeled_bb = getPatch(labeled_image, (Y,X), radius = (74,74), fill=0)
-    #         bb[labeled_bb != row.image_label] = 0 
-    #     io.imsave(out_dir / f"{image_prefix}cell{i}.tif", bb)
+    for i,row in enumerate(measured_df.itertuples()):
+        if row.image_label not in labels_to_leave_out:
+            X = row.center_X
+            Y = row.center_Y
+            new_row, new_col = adaptCoordsOfMiddleTile(Y, X)
+            bb = getPatch(empty, (new_row,new_col), radius = (149,149), fill=0)
+            # io.imsave(regular_dir / f"{image_prefix}cell{i}.tif", bb)
+            # if labeled_image is not None:
+            #     labeled_bb = getPatch(labeled_image, (Y,X), radius = (74,74), fill=0)
+            #     bb[labeled_bb != row.image_label] = 0 
+            # io.imsave(out_dir / f"{image_prefix}cell{i}.tif", bb)
 
-    #     if GEimage is not None:
-    #         gene_labeled_bb = getPatch(GEimage, (Y,X), radius = (74,74), fill=0)
-    #         gene_labeled_bb[labeled_bb != row.image_label] = 0
-    #         io.imsave(GE_out_dir / f"{image_prefix}gene_labeled{i}.tif", gene_labeled_bb)
-        # plt.imshow(bb)
-        # plt.show()
+            # if GEimage is not None:
+            #     gene_labeled_bb = getPatch(GEimage, (Y,X), radius = (74,74), fill=0)
+            #     gene_labeled_bb[labeled_bb != row.image_label] = 0
+            #     io.imsave(GE_out_dir / f"{image_prefix}gene_labeled{i}.tif", gene_labeled_bb)
+            plt.imshow(bb)
+            plt.title(f"tile {tile_nr}, label: {row.image_label}")
+            plt.show()
 
 def sortByRegex(target_list, regex):
     r = re.compile(rf"{regex}")
@@ -166,12 +169,14 @@ def findCenter(x_shape):
     return middle
 
 if __name__ == '__main__':
-    # import pickle
-    pass
-    # from tiling import tileGrid
-    # image_basename = "../out_dir/labeled1_MERFISH_nuclei_tile"
-    # measured_basename = "../out_dir/labeled1_MERFISH_nuclei_measured_tile"
-    # # with open("../out_dir/tile_grid.pickle", 'rb') as f:
-    # #     grid = pickle.load(f)
+    import pickle
+    import matplotlib.pyplot as plt
+    from tiling import tileGrid, tileBorder
+
+    image_basename = "../out_dir/labeled1_MERFISH_nuclei_tile"
+    measured_basename = "../out_dir/labeled1_MERFISH_nuclei_measured_tile"
+    with open("../out_dir/tile_grid.pickle", 'rb') as f:
+        grid = pickle.load(f)
     # grid = tileGrid(4,4,2048, 2048)
-    # isolateSingleCellsFromTile(measured_basename, image_basename, grid, 14, out_dir = "../out_dir/isolated_images/")
+    for i in range(1,17):
+        isolateSingleCellsFromTile(measured_basename, image_basename, grid, i, out_dir = "../out_dir/isolated_images/")
