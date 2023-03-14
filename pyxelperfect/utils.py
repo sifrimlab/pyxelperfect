@@ -168,6 +168,9 @@ def findCenter(x_shape):
     middle = x_shape[0] / 2, x_shape[1] / 2
     return middle
 
+def exceptGlob(full_glob: str, except_glob: str):
+    return list(set(glob(full_glob)) - set(glob(except_glob)))
+
 if __name__ == '__main__':
     import pickle
     import matplotlib.pyplot as plt

@@ -47,8 +47,8 @@ def createOverlay(labeled_image, image):
     tmp_image[find_boundaries(labeled_image)] = max_val
     return tmp_image
 
-def plotBoundaries(labeled_image,,image):
-    plt.imshow(createOverlay(image, labeled_image))
+def plotBoundaries(labeled_image,image):
+    plt.imshow(createOverlay(labeled_image, image))
     plt.axis("off")
     plt.show()
 
