@@ -4,6 +4,7 @@ from skimage import io
 import numpy as np
 from skimage.util import img_as_ubyte
 from skimage import color
+from skimage.segmentation import find_boundaries
 import numpy as np
 from .manipulate import automaticBrightnessAndContrast
 import cv2
