@@ -156,7 +156,7 @@ class tileGrid:
     # Important for usage: tile names start at indexin 1, so for self.tile_boundaries (which is a dict), keys start at 1
     # image list and data coordinates are there to be able to tile them after the fact
     # """
-    def __init__(self, rowdiv, coldiv, n_rows, n_cols, image_list = [], data_coordinates_list=[], tiles={}):
+    def __init__(self, rowdiv, coldiv, n_rows, n_cols, image_list = [], data_coordinates_list=[], tiles={}, pattern="row_by_row"):
 # basic vars
         self.n_rows = n_rows # Number rows in the complete array, untiled
         self.n_cols = n_cols # Number cols in the complete array, untiled
@@ -172,7 +172,22 @@ class tileGrid:
         self.n_tiles = int(rowdiv * coldiv) # total number of tiles created
 
         # numerical representation of the tiles
-        self.tile_grid = np.arange(1, self.n_tiles + 1).reshape(self.rowdiv, self.coldiv) # representation of the tile grid in numbers, for if you want to search for the position of a specific tile
+        if pattern == "row_by_row":
+            self.tile_grid = np.arange(1, self.n_tiles + 1).reshape(self.rowdiv, self.coldiv) # representation of the tile grid in numbers, for if you want to search for the position of a specific tile
+        elif pattern == "snake_by_row":
+            '''
+            [[ 1 2 3 ]
+             [ 6 5 4 ]
+             [ 7 8 9 ]]
+            '''
+            arr = np.arange(1, self.n_tiles+1)
+            # Reshape the range into a 2D array
+            arr_2d = arr.reshape(self.rowdiv, self.coldiv)
+            # Reverse every other row
+            for i in range(1, arr_2d.shape[0], 2):
+                arr_2d[i] = arr_2d[i, ::-1]
+            # Print the resulting array
+            self.tile_grid = arr_2d
 
         # Calculate boundaries of tiles
         self.tile_boundaries = {} # Dict that stores the boundaries of the tiles (with respect to the padded image, not the original)
@@ -495,8 +510,9 @@ def plotLabeledImageOverlap(labeled_image_paths, tile_grid):
     plt.show()
 
 if __name__ == '__main__':
-    grid = tileGrid(4,4,2048,2048)
+    grid = tileGrid(4,4,1100,800, pattern = "snake_by_row")
+    print(grid)
     # grid.getNeighbouringTiles(2)
 
-    plotLabeledImageOverlap(glob.glob("../out_dir/labeled1_MERFISH_nuclei_tile*.tif"), grid)
+    # plotLabeledImageOverlap(glob.glob("../out_dir/labeled1_MERFISH_nuclei_tile*.tif"), grid)
 
