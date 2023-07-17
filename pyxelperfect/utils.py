@@ -4,10 +4,9 @@ import numpy as np
 from pathlib import Path
 from skimage import io
 import pandas as pd
+from scipy.ndimage import distance_transform_edt
+from glob import glob
 
-#tmp
-# import matplotlib.pyplot as plt
-# from tiling import tileBorder
 
 def getPatch(arr, idx, radius=3, fill=None):
     """
@@ -185,6 +184,7 @@ def isolateSingleCellsFromTile(measured_df_basename: str , image_basename: str, 
                     bot_border = tileBorder(bot_neighbour, neighbours["bot"])
                     bot_matches = middle_border.matchTileBorders(bot_border, grid)
                     matching_label = bot_matches[cell_row.image_label]
+                    print(bot_measured_df.loc[bot_measured_df['image_label'] == matching_label]['center_X'])
                     matching_label_center_row, matching_label_center_col = bot_measured_df.loc[bot_measured_df['image_label'] == matching_label]['center_Y'][0],  bot_measured_df.loc[bot_measured_df['image_label'] == matching_label]['center_X'][0]
                     # then adapt that label's coordinates to the current 3x3 coordinate system
                     new_matching_label_center_row, new_matching_label_center_col  = adaptCoordsOfBottomTile(matching_label_center_row, matching_label_center_col, grid)
@@ -194,7 +194,7 @@ def isolateSingleCellsFromTile(measured_df_basename: str , image_basename: str, 
                     matching_point_area = bot_measured_df.loc[bot_measured_df['image_label'] == matching_label]['Area'][0]
                     midpoint_row, midpoint_col = weighted_midpoint((new_matching_label_center_row, new_matching_label_center_col), matching_point_area, (new_row,new_col), current_point_area) 
                     plt.scatter((new_col, new_matching_label_center_col, midpoint_col), (new_row, new_matching_label_center_row, midpoint_row), color=('red', 'green', 'orange'))
-                    plt.show()
+                    # plt.show()
 
             else:
                 pass
@@ -234,6 +234,32 @@ def findCenter(x_shape):
 def exceptGlob(full_glob: str, except_glob: str):
     return list(set(glob(full_glob)) - set(glob(except_glob)))
 
+def expand_labels_manual(label_image, distance=1):
+    distances, nearest_label_coords = distance_transform_edt(
+        label_image == 0, return_indices=True
+    )
+    labels_out = np.zeros_like(label_image)
+    dilate_mask = distances <= distance
+
+    masked_nearest_label_coords = [
+        dimension_indices[dilate_mask]
+        for dimension_indices in nearest_label_coords
+    ]
+    nearest_labels = label_image[tuple(masked_nearest_label_coords)]
+    labels_out[dilate_mask] = nearest_labels
+    return labels_out, distances, nearest_label_coords
+
+def expand_labels_on_something_else(label_image, distances, nearest_label_coords, distance=1):
+    labels_out = np.zeros_like(label_image)
+    dilate_mask = distances <= distance
+    masked_nearest_label_coords = [
+        dimension_indices[dilate_mask]
+        for dimension_indices in nearest_label_coords
+    ]
+    nearest_labels = label_image[tuple(masked_nearest_label_coords)]
+    labels_out[dilate_mask] = nearest_labels
+    return labels_out
+
 if __name__ == '__main__':
     import pickle
     import matplotlib.pyplot as plt
@@ -245,5 +271,6 @@ if __name__ == '__main__':
         grid = pickle.load(f)
     # grid = tileGrid(4,4,2048, 2048)
     for i in range(1,17):
+        print(f"{i} iteration")
         isolateSingleCellsFromTile(measured_basename, image_basename, grid, i, out_dir = "../out_dir/isolated_images/")
         
