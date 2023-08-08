@@ -106,7 +106,7 @@ def tileImage(image: np.ndarray, rowdiv: int, coldiv: int, image_prefix: str="im
     final_split = [item for sublist in [np.array_split(row, coldiv, axis = 1) for row in temp_split] for item in sublist]
 
     for i, img in enumerate(final_split, 1):
-        imsave(f"{image_prefix}tile{i}.tif", img)
+        imsave(f"{image_prefix}tile{i}.tif", img, check_contrast=False)
 
 def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int, out_dir: str = "", calc_only=False) -> Tuple[int]:
     """Tile the images caught by the glob pattern by first padding them to a global image size needed to tile them all into the same tile size, given by the input values. Tiles are written to tif files in the basedir of the original image, or to out_dir if given, with naming convention {out_dir | basedir}/{image_name}_tile{i}.tif

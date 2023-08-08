@@ -1,14 +1,25 @@
-import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
-from skimage import io
-import numpy as np
-from skimage.util import img_as_ubyte
-from skimage import color
-from skimage.segmentation import find_boundaries
-import numpy as np
-from .manipulate import automaticBrightnessAndContrast
 import cv2
+import numpy as np
 import pandas as pd
+from skimage import io
+from skimage import color
+import matplotlib.pyplot as plt
+from skimage.color import label2rgb
+import matplotlib.patches as mpatches
+from skimage.util import img_as_ubyte
+from skimage.segmentation import find_boundaries
+from .manipulate import automaticBrightnessAndContrast
+
+def makeHist(data, mn, mx, interval):
+    n, bins, patches = plt.hist(x=data, bins=np.arange(mn, mx, interval)-interval/2, color='navy',
+                            alpha=0.7, rwidth=0.85)
+
+    plt.grid(axis='y', alpha=0.75)
+    plt.xlabel('Nr mitf spots')
+    plt.xticks(np.arange(mn,mx,interval))
+    plt.ylabel('Frequency')
+    maxfreq = n.max()
+    plt.show()
 
 def showSegmentation(labeled_image: np.array, original_image: np.array = None, save=False, plot=True, overlay=False):
     colored_image = color.label2rgb(labeled_image, bg_label=0)
@@ -110,4 +121,44 @@ def plotSpatial(image, dataframe, rowname = "row", colname="col", dotsize=5, col
         plt.show()
 
     return plt
+
+
+def plotObjectPerAreaBin(labeled_image, measured_df, mn, mx, interval):
+    bins = list(range(mn, mx, interval))
+    bins.append(float("inf"))
+
+    str_labels = []
+    for i, el in enumerate(bins):
+        if not i == len(bins)-2:
+            str_labels.append(f"{el}-{bins[i+1]}")
+        else:
+            str_labels.append(f"{bins[-2]}+")
+            break
+    print(str_labels)
+
+    def get_cmap(n, name='tab10'):
+        ##Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
+        ##RGB color; the keyword argument name must be a standard mpl colormap name.
+        return plt.cm.get_cmap(name, n)
+
+
+    color_labels= []
+    global_cmap = get_cmap(len(bins))
+
+    for i in range(len(bins)-1):
+        color_labels.append(global_cmap(i))
+
+    area_interval_colors = pd.cut(measured_df["Area"], bins=bins, labels=color_labels)
+    area_interval_strings = pd.cut(measured_df["Area"], bins=bins, labels=str_labels)
+    measured_df["area_interval_colors"] = area_interval_colors
+    measured_df["area_interval_strings"] = area_interval_strings
+
+    plt.imshow(label2rgb(labeled_image, colors=measured_df["area_interval_colors"]))
+    colors = color_labels
+    # create a patch (proxy artist) for every color 
+    patches = [ mpatches.Patch(color=colors[i], label=str_labels[i]) for i in range(len(str_labels)) ]
+    plt.axis("off")
+    # put those patched as legend-handles into the legend
+    plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
+
 
