@@ -274,7 +274,8 @@ class tileBorder:
         self.border_mask = self._getArrayBorder(self.labeled_image)
         tmp_list = list( np.unique(self.labeled_image[self.border_mask]))
         # Remove 0, which is background, not an actual label
-        tmp_list.remove(0)
+        if 0 in tmp_list:
+            tmp_list.remove(0)
         self.border_labels = tmp_list 
         self.nr_border_objects = len(self.border_labels)
         self.tile_nr = tile_nr
