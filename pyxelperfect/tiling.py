@@ -8,7 +8,8 @@ from tifffile import imsave
 from typing import List, Tuple
 import matplotlib.pyplot as plt
 from skimage.io import imread_collection, imsave, imread
-
+import PIL
+PIL.Image.MAX_IMAGE_PIXELS = None
 
 
 
@@ -31,6 +32,16 @@ def calculateOptimalLargestResolution(glob_pattern: str, target_tile_height: int
 
     """
     
+    def calcMaxesOfNonLoadedImages(str_glob_pattern):
+        heights = []
+        widths = []
+        for file in glob(str_glob_pattern):
+            with PIL.Image.open(file) as img:
+                width, height = img.size         
+                widths.append(width)
+                heights.append(height)
+        return max(heights), max(widths)
+
     def calcMaxes(images_array):
         heights = []
         widths = []
@@ -46,12 +57,13 @@ def calculateOptimalLargestResolution(glob_pattern: str, target_tile_height: int
         return max_rows, max_columns
 
     if isinstance(glob_pattern, str):
-        images_array = np.array(imread_collection(glob_pattern))
-        max_rows, max_columns = calcMaxes(images_array)
+        # images_array = np.array(imread_collection(glob_pattern))
+        max_rows, max_columns = calcMaxesOfNonLoadedImages(glob_pattern)
     elif isinstance(glob_pattern, np.ndarray):
         images_array = glob_pattern
         max_rows, max_columns = calcMaxes(images_array)
     elif isinstance(glob_pattern, tuple):
+        # If the given argument is just already the max resolution
         max_rows, max_columns = glob_pattern
 
     rowdiv = np.ceil(max_rows / target_tile_height)
