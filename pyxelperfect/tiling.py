@@ -1,5 +1,5 @@
 import os
-import glob
+from glob import glob
 import re
 import numpy as np
 import pandas as pd
@@ -152,10 +152,10 @@ def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int, out
 
     padded_imgs = {}
     if not out_dir:
-        for image_path in glob.glob(glob_pattern):
+        for image_path in glob(glob_pattern):
             padded_imgs[os.path.splitext(image_path)[0]] = padImage(imread(image_path), int(target_full_rows), int(target_full_columns))
     else:
-        for image_path in glob.glob(glob_pattern):
+        for image_path in glob(glob_pattern):
             padded_imgs[os.path.join(out_dir, os.path.splitext(os.path.basename(image_path))[0])] = padImage(imread(image_path), int(target_full_rows), int(target_full_columns))
 
     for k, padded_img in padded_imgs.items():
@@ -527,5 +527,5 @@ if __name__ == '__main__':
     print(grid)
     # grid.getNeighbouringTiles(2)
 
-    # plotLabeledImageOverlap(glob.glob("../out_dir/labeled1_MERFISH_nuclei_tile*.tif"), grid)
+    # plotLabeledImageOverlap(glob("../out_dir/labeled1_MERFISH_nuclei_tile*.tif"), grid)
 
