@@ -98,29 +98,40 @@ def evaluateRegistration(ref_image, target_image, registered_target, identifier:
         axs[1].legend(handles=[red_patch, green_patch_2])
         plt.show()
 
-def plotSpatial(image, dataframe, rowname = "row", colname="col", dotsize=5, color="red", save=False, plot=True):
+def plotSpatial(image, dataframe, rowname = "row", colname="col", dotsize=5, color="red", save=False, plot=True, ax=None):
 
     def get_cmap(n, name='hsv'):
     ##Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
     ##RGB color; the keyword argument name must be a standard mpl colormap name.
         return plt.cm.get_cmap(name, n)
 
-    plt.imshow(image, cmap="gray")
+
+    if ax is None:
+        fig, ax = plt.subplots(1,1)
+    ax.imshow(image, cmap="gray")
     if color in dataframe.columns:
         unique_els = dataframe[color].unique()
         cmap = get_cmap(len(unique_els))
         for i, c in enumerate(unique_els):
             tmp_df = dataframe[dataframe[color] == c]
-            plt.scatter(tmp_df[colname], tmp_df[rowname], color=cmap(i), s=dotsize)
+            if isinstance(dotsize, str):
+                tmp_dotsize = np.array(tmp_df[dotsize].astype(float))
+            else:
+                tmp_dotsize = dotsize
+            ax.scatter(tmp_df[colname], tmp_df[rowname], color=cmap(i), s=tmp_dotsize)
     else:
-        plt.scatter(dataframe[colname], dataframe[rowname], color=color, s=dotsize)
+        if isinstance(dotsize, str):
+            tmp_dotsize = np.array(tmp_df[dotsize].astype(float))
+        else:
+            tmp_dotsize = dotsize
+        ax.scatter(dataframe[colname], dataframe[rowname], color=color, s=tmp_dotsize)
 
     if save:
         plt.savefig("spatial_plot.png")
     if plot:
         plt.show()
 
-    return plt
+    return ax
 
 
 def plotObjectPerAreaBin(labeled_image, measured_df, mn, mx, interval):
@@ -160,5 +171,7 @@ def plotObjectPerAreaBin(labeled_image, measured_df, mn, mx, interval):
     plt.axis("off")
     # put those patched as legend-handles into the legend
     plt.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
+
+
 
 
