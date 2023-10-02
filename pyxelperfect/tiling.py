@@ -1,5 +1,5 @@
 import os
-import glob
+from glob import glob
 import re
 import numpy as np
 import pandas as pd
@@ -8,7 +8,8 @@ from tifffile import imsave
 from typing import List, Tuple
 import matplotlib.pyplot as plt
 from skimage.io import imread_collection, imsave, imread
-
+import PIL
+PIL.Image.MAX_IMAGE_PIXELS = None
 
 
 
@@ -31,6 +32,16 @@ def calculateOptimalLargestResolution(glob_pattern: str, target_tile_height: int
 
     """
     
+    def calcMaxesOfNonLoadedImages(str_glob_pattern):
+        heights = []
+        widths = []
+        for file in glob(str_glob_pattern):
+            with PIL.Image.open(file) as img:
+                width, height = img.size         
+                widths.append(width)
+                heights.append(height)
+        return max(heights), max(widths)
+
     def calcMaxes(images_array):
         heights = []
         widths = []
@@ -46,12 +57,13 @@ def calculateOptimalLargestResolution(glob_pattern: str, target_tile_height: int
         return max_rows, max_columns
 
     if isinstance(glob_pattern, str):
-        images_array = np.array(imread_collection(glob_pattern))
-        max_rows, max_columns = calcMaxes(images_array)
+        # images_array = np.array(imread_collection(glob_pattern))
+        max_rows, max_columns = calcMaxesOfNonLoadedImages(glob_pattern)
     elif isinstance(glob_pattern, np.ndarray):
         images_array = glob_pattern
         max_rows, max_columns = calcMaxes(images_array)
     elif isinstance(glob_pattern, tuple):
+        # If the given argument is just already the max resolution
         max_rows, max_columns = glob_pattern
 
     rowdiv = np.ceil(max_rows / target_tile_height)
@@ -140,10 +152,10 @@ def tile(glob_pattern: str, target_tile_width: int, target_tile_height: int, out
 
     padded_imgs = {}
     if not out_dir:
-        for image_path in glob.glob(glob_pattern):
+        for image_path in glob(glob_pattern):
             padded_imgs[os.path.splitext(image_path)[0]] = padImage(imread(image_path), int(target_full_rows), int(target_full_columns))
     else:
-        for image_path in glob.glob(glob_pattern):
+        for image_path in glob(glob_pattern):
             padded_imgs[os.path.join(out_dir, os.path.splitext(os.path.basename(image_path))[0])] = padImage(imread(image_path), int(target_full_rows), int(target_full_columns))
 
     for k, padded_img in padded_imgs.items():
@@ -274,7 +286,8 @@ class tileBorder:
         self.border_mask = self._getArrayBorder(self.labeled_image)
         tmp_list = list( np.unique(self.labeled_image[self.border_mask]))
         # Remove 0, which is background, not an actual label
-        tmp_list.remove(0)
+        if 0 in tmp_list:
+            tmp_list.remove(0)
         self.border_labels = tmp_list 
         self.nr_border_objects = len(self.border_labels)
         self.tile_nr = tile_nr
@@ -514,5 +527,5 @@ if __name__ == '__main__':
     print(grid)
     # grid.getNeighbouringTiles(2)
 
-    # plotLabeledImageOverlap(glob.glob("../out_dir/labeled1_MERFISH_nuclei_tile*.tif"), grid)
+    # plotLabeledImageOverlap(glob("../out_dir/labeled1_MERFISH_nuclei_tile*.tif"), grid)
 
