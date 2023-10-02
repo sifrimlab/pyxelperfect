@@ -121,18 +121,22 @@ def changeRGBcolor(image, original_color, target_color):
 
     # io.imsave("./image_fixed.png", data, check_contrast=False)
 
+def changeAllColors(image, target_color):
+    return_image = image.copy()
+    for row in range(image.shape[0]):
+        for col in range(image.shape[1]):
+            if image[row,col, 0] > target_color[0] and image[row,col, 1] > target_color[1] and image[row,col, 2] > target_color[2]:
+                return_image[row,col] = target_color
+    return return_image
+
+
 if __name__ == '__main__':
-    ref_image = np.zeros((1600,500), dtype=np.uint)
-    ref_image[ellipse(800,250, 700, 100)] = 255
-    target_image = np.zeros((1000,1000), dtype=np.uint)
-    target_image[ellipse(500,500, 400,200)] = 255
+    from glob import glob
 
-    warped_ref_image, warped_target_image = equalizeImageSize(ref_image, target_image)
-
-    fig, axs = plt.subplots(2,2)
-    axs[0,0].imshow(ref_image)
-    axs[0,1].imshow(target_image)
-    axs[1,0].imshow(warped_ref_image)
-    axs[1,1].imshow(warped_target_image)
-    plt.show()
-
+    for img in glob("/home/david/Documents/phd/poster/figures/figures poster/Slide*.jpg"):
+    # for img in glob("/home/david/Documents/phd/poster/graphics/fwo.jpeg"):
+        original_image = io.imread(img)
+        # changed = changeRGBcolor(, (255,255,255), (242, 242, 242))
+        # changed = changeRGBcolor(changed, (254,254,254), (242, 242, 242))
+        changed = changeAllColors(original_image, (242, 242, 242))
+        io.imsave(img, changed, check_contrast=False)
