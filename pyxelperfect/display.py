@@ -98,9 +98,9 @@ def evaluateRegistration(ref_image, target_image, registered_target, identifier:
         axs[1].legend(handles=[red_patch, green_patch_2])
         plt.show()
 
-def plotSpatial(image, dataframe, rowname = "row", colname="col", dotsize=5, color="red", save=False, plot=True, ax=None):
+def plotSpatial(image, dataframe, rowname = "row", colname="col", dotsize=5, color="red", save=False, plot=True, ax=None, colormap="tab20"):
 
-    def get_cmap(n, name='hsv'):
+    def get_cmap(n, name='tab20'):
     ##Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
     ##RGB color; the keyword argument name must be a standard mpl colormap name.
         return plt.cm.get_cmap(name, n)
@@ -111,20 +111,26 @@ def plotSpatial(image, dataframe, rowname = "row", colname="col", dotsize=5, col
     ax.imshow(image, cmap="gray")
     if color in dataframe.columns:
         unique_els = dataframe[color].unique()
-        cmap = get_cmap(len(unique_els))
+
+        cmap = get_cmap(len(unique_els), name=colormap)
+        patches = []
         for i, c in enumerate(unique_els):
             tmp_df = dataframe[dataframe[color] == c]
             if isinstance(dotsize, str):
                 tmp_dotsize = np.array(tmp_df[dotsize].astype(float))
             else:
                 tmp_dotsize = dotsize
-            ax.scatter(tmp_df[colname], tmp_df[rowname], color=cmap(i), s=tmp_dotsize)
+            curr_col = cmap(i)
+            ax.scatter(tmp_df[colname], tmp_df[rowname], color=curr_col, s=tmp_dotsize)
+            patches.append(mpatches.Patch(color=curr_col, label=c))
     else:
         if isinstance(dotsize, str):
             tmp_dotsize = np.array(tmp_df[dotsize].astype(float))
         else:
             tmp_dotsize = dotsize
         ax.scatter(dataframe[colname], dataframe[rowname], color=color, s=tmp_dotsize)
+
+    ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
 
     if save:
         plt.savefig("spatial_plot.png")
