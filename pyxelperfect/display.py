@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from skimage.color import label2rgb
 import matplotlib.patches as mpatches
 from skimage.util import img_as_ubyte
-from skimage.segmentation import find_boundaries
+from skimage.segmentation import find_boundaries, mark_boundaries
 from .manipulate import automaticBrightnessAndContrast
 
 def makeHist(data, mn, mx, interval):
@@ -21,30 +21,34 @@ def makeHist(data, mn, mx, interval):
     maxfreq = n.max()
     plt.show()
 
-def showSegmentation(labeled_image: np.array, original_image: np.array = None, save=False, plot=True, overlay=False):
-    colored_image = color.label2rgb(labeled_image, bg_label=0)
-    if original_image is not None:
-        original_image = img_as_ubyte(original_image)
-
+def showSegmentation(labeled_image: np.array, original_image, extra_labeled_image=None, extra_original_image=None, out_file=""):
     colored_image_on_DAPI = color.label2rgb(labeled_image, original_image, bg_label=0)
-    if save:
-        io.imsave("labeled_image.tif", colored_image_on_DAPI)
 
-    if plot:
-        if original_image is not None:
-            if not overlay:
-                fig, axs = plt.subplots(1,2, sharex=True, sharey=True)
-                axs[0].imshow(original_image)
-                axs[1].imshow(colored_image_on_DAPI)
-                plt.axis("off")
-                plt.show()
-            elif overlay:
-                plotBoundaries(labeled_image, original_image)
+    if extra_original_image is not None:
+        viz_img = np.zeros((*original_image.shape, 3))
+        viz_img[:,:,0] = original_image /  np.amax(original_image)
+        viz_img[:,:,1] = extra_original_image /  np.amax(extra_original_image)
+    else:
+        viz_img = original_image
 
-        else:
-            plt.imshow(colored_image_on_DAPI)
-            plt.axis("off")
-            plt.show()
+    fig, axs = plt.subplots(2,2, sharex=True, sharey=True)
+
+    axs = axs.flatten()
+    for ax in axs:
+        ax.axis('off')
+
+    axs[0].imshow(viz_img)
+    axs[0].set_title("original image")
+    axs[1].imshow(colored_image_on_DAPI)
+    axs[1].set_title("Segmentation labeled image")
+    axs[2].imshow(mark_boundaries(viz_img, labeled_image))
+    axs[2].set_title("overlay dapi")
+    if extra_labeled_image is not None:
+        axs[3].imshow(mark_boundaries(viz_img, extra_labeled_image))
+        axs[3].set_title("overlay cell")
+
+    plt.show()
+
 
 
 

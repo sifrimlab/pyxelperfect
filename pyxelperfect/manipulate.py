@@ -129,6 +129,11 @@ def changeAllColors(image, target_color):
                 return_image[row,col] = target_color
     return return_image
 
+def normImage(img):
+    mn = np.amin(img)
+    mx = np.amax(img)
+    return (img - mn) * (1.0 / (mx - mn))
+
 
 if __name__ == '__main__':
     from glob import glob
