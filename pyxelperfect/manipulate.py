@@ -11,61 +11,43 @@ import matplotlib.pyplot as plt
 from skimage.draw import ellipse
 
 
-# Automatic brightness and contrast optimization with optional histogram clipping
-def automaticBrightnessAndContrast(image: np.array, clip_hist_percent: int =1):
+def automaticBrightnessAndContrast(image: np.array, clip_hist_percent: int = 1):
     if np.amin(image) == 0 and np.amax(image) == 0:
-        return image, 0, 0
-    if len(image.shape) > 2:
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    else: 
-        gray = image
-    
+        return image
+
     # Calculate grayscale histogram
-    hist = cv2.calcHist([gray],[0],None,[256],[0,256])
-    hist_size = len(hist)
-    
+    hist, _ = np.histogram(image.flatten(), 256, [0, 256])
+
     # Calculate cumulative distribution from the histogram
-    accumulator = []
-    accumulator.append(float(hist[0]))
-    for index in range(1, hist_size):
-        accumulator.append(accumulator[index -1] + float(hist[index]))
-    
+    accumulator = hist.cumsum()
+
     # Locate points to clip
     maximum = accumulator[-1]
-    clip_hist_percent *= (maximum/100.0)
+    clip_hist_percent *= (maximum / 100.0)
     clip_hist_percent /= 2.0
-    
+
     try:
         # Locate left cut
         minimum_gray = 0
         while accumulator[minimum_gray] < clip_hist_percent:
             minimum_gray += 1
-        
+
         # Locate right cut
-        maximum_gray = hist_size -1
+        maximum_gray = len(accumulator) - 1
         while accumulator[maximum_gray] >= (maximum - clip_hist_percent):
             maximum_gray -= 1
     except:
         return image
-    
+
     # If the image was empty, the alpha calculation will raise an error, so just return the original image
     if maximum_gray - minimum_gray == 0:
         return image
+
     # Calculate alpha and beta values
     alpha = 255 / (maximum_gray - minimum_gray)
     beta = -minimum_gray * alpha
 
-    
-    '''
-    # Calculate new histogram with desired range and show histogram 
-    new_hist = cv2.calcHist([gray],[0],None,[256],[minimum_gray,maximum_gray])
-    plt.plot(hist)
-    plt.plot(new_hist)
-    plt.xlim([0,256])
-    plt.show()
-    '''
-
-    auto_result = cv2.convertScaleAbs(image, alpha=alpha, beta=beta)
+    auto_result = exposure.rescale_intensity(image, in_range=(minimum_gray, maximum_gray))
     return auto_result
 
 def equalizeImageSize(ref_image: np.array, target_image: np.array, save = False, out_name = "") -> np.array:
