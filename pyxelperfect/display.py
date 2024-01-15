@@ -103,16 +103,18 @@ def evaluateRegistration(ref_image, target_image, registered_target, identifier:
         plt.show()
 
 def plotSpatial(image, dataframe, rowname = "row", colname="col", dotsize=5, color="red", save=False, plot=True, ax=None, colormap="tab20"):
-
     def get_cmap(n, name='tab20'):
-    ##Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
-    ##RGB color; the keyword argument name must be a standard mpl colormap name.
-        return plt.cm.get_cmap(name, n)
+        ##Returns a function that maps each index in 0, 1, ..., n-1 to a distinct 
+        ##RGB color; the keyword argument name must be a standard mpl colormap name.
+            return plt.cm.get_cmap(name, n)
 
-
+    res_img = np.zeros((*image.shape, 3))
+    
+    res_img[:,:,0] = image / np.amax(image)
     if ax is None:
         fig, ax = plt.subplots(1,1)
-    ax.imshow(image, cmap="gray")
+
+    # If color is based on another column
     if color in dataframe.columns:
         unique_els = dataframe[color].unique()
 
@@ -120,29 +122,43 @@ def plotSpatial(image, dataframe, rowname = "row", colname="col", dotsize=5, col
         patches = []
         for i, c in enumerate(unique_els):
             tmp_df = dataframe[dataframe[color] == c]
+            curr_col = cmap(i)
+            curr_col_3 = np.array(curr_col)[:3]
+
+            for tmp_row in tmp_df.itertuples():
+                tmp_row = tmp_row._asdict()
+                if isinstance(dotsize, str):
+                    tmp_dotsize = tmp_row[dotsize]
+                else:
+                    tmp_dotsize = dotsize
+
+                rr, cc = disk((tmp_row[rowname], tmp_row[colname]), radius = tmp_dotsize, shape=res_img.shape)
+                res_img[rr, cc, :] = curr_col_3
+
+            patches.append(mpatches.Patch(color=curr_col_3, label=c))
+        ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
+
+    else:
+        tmp_color = colors.to_rgb(color)
+        for tmp_row in dataframe.itertuples():
+            tmp_row = tmp_row._asdict()
+
             if isinstance(dotsize, str):
-                tmp_dotsize = np.array(tmp_df[dotsize].astype(float))
+                tmp_dotsize = tmp_row[dotsize]
             else:
                 tmp_dotsize = dotsize
-            curr_col = cmap(i)
-            ax.scatter(tmp_df[colname], tmp_df[rowname], color=curr_col, s=tmp_dotsize)
-            patches.append(mpatches.Patch(color=curr_col, label=c))
-    else:
-        if isinstance(dotsize, str):
-            tmp_dotsize = np.array(tmp_df[dotsize].astype(float))
-        else:
-            tmp_dotsize = dotsize
-        ax.scatter(dataframe[colname], dataframe[rowname], color=color, s=tmp_dotsize)
 
-    ax.legend(handles=patches, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0. )
+            rr, cc = disk((tmp_row[rowname], tmp_row[colname]), radius = tmp_dotsize, shape=res_img.shape)
+            res_img[rr, cc, :] = tmp_color
+        # ax.scatter(dataframe[colname], dataframe[rowname], color=color, s=tmp_dotsize)
 
-    if save:
-        plt.savefig("spatial_plot.png")
+
+    ax.imshow(res_img)
+
     if plot:
         plt.show()
 
-    return ax
-
+    return ax, res_img
 
 def plotObjectPerAreaBin(labeled_image, measured_df, mn, mx, interval):
     bins = list(range(mn, mx, interval))
