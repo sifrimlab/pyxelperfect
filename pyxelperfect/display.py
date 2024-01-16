@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 from skimage import io
 from skimage import color
+from skimage.draw import disk
 import matplotlib.pyplot as plt
 from skimage.color import label2rgb
 import matplotlib.patches as mpatches
