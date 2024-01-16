@@ -6,6 +6,7 @@ from skimage import color
 import matplotlib.pyplot as plt
 from skimage.color import label2rgb
 import matplotlib.patches as mpatches
+from matplotlib import colors
 from skimage.util import img_as_ubyte
 from skimage.segmentation import find_boundaries, mark_boundaries
 from .manipulate import automaticBrightnessAndContrast
