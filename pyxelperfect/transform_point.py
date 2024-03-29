@@ -128,8 +128,11 @@ def transformPointsWithBbox(point, bbox, force = False):
         if not force:
             return None
         else:
-            # TODO you might want to add another snippet here that returns the closes point in the new bbox image
-            return None
+            # If it doesn't fit, we find the closest point to the bbox that does fit
+            closest_row = min(max(min_row, point[0]), max_row)
+            closest_col = min(max(min_col, point[1]), max_col)
+        
+            return closest_row - min_row, closest_col - min_col
 
 def calculateResizeZoomFactors(original_shape, target_shape):
     """
