@@ -7,10 +7,8 @@ from skimage import io
 from tifffile import imsave
 from typing import List, Tuple
 import matplotlib.pyplot as plt
+import imagesize
 from skimage.io import imread_collection, imsave, imread
-import PIL
-PIL.Image.MAX_IMAGE_PIXELS = None
-
 
 
 def calculateOptimalLargestResolution(glob_pattern: str, target_tile_height: int, target_tile_width: int) -> Tuple[int]: 
@@ -36,10 +34,9 @@ def calculateOptimalLargestResolution(glob_pattern: str, target_tile_height: int
         heights = []
         widths = []
         for file in glob(str_glob_pattern):
-            with PIL.Image.open(file) as img:
-                width, height = img.size         
-                widths.append(width)
-                heights.append(height)
+            width, height = imagesize.get(dapi_path)
+            widths.append(width)
+            heights.append(height)
         return max(heights), max(widths)
 
     def calcMaxes(images_array):
