@@ -34,7 +34,7 @@ def calculateOptimalLargestResolution(glob_pattern: str, target_tile_height: int
         heights = []
         widths = []
         for file in glob(str_glob_pattern):
-            width, height = imagesize.get(dapi_path)
+            width, height = imagesize.get(file)
             widths.append(width)
             heights.append(height)
         return max(heights), max(widths)
