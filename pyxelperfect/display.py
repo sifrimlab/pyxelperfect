@@ -110,7 +110,7 @@ def plotSpatial(image, dataframe, rowname = "row", colname="col", dotsize=5, col
         ##RGB color; the keyword argument name must be a standard mpl colormap name.
             return plt.cm.get_cmap(name, n)
 
-    if len(res_img.shape) < 3:
+    if len(image.shape) < 3:
         res_img = np.zeros((*image.shape[:2], 3))
         res_img[:,:,0] = image / np.amax(image)
     else:
