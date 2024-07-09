@@ -249,7 +249,7 @@ class tileGrid:
         row_slice, col_slice =  self.tile_boundaries[tile_nr][0], self.tile_boundaries[tile_nr][1]
 
         tmp_df = df.loc[(df[rowname] >= row_slice.start) & (df[rowname] < row_slice.stop)]
-        cropped_df = tmp_df.loc[(tmp_df[colname] > col_slice.start) & (tmp_df[colname] <= col_slice.stop)]
+        cropped_df = tmp_df.loc[(tmp_df[colname] >= col_slice.start) & (tmp_df[colname] < col_slice.stop)]
 
         local_rows = [el - row_slice.start for el in cropped_df[rowname]]
         local_cols = [el - col_slice.start for el in cropped_df[colname]]
