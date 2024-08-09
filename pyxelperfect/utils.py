@@ -260,6 +260,39 @@ def expand_labels_on_something_else(label_image, distances, nearest_label_coords
     labels_out[dilate_mask] = nearest_labels
     return labels_out
 
+def getUnevenSubplots(num_axes):
+    # Determine the grid size
+    n_cols = math.ceil(math.sqrt(num_axes))
+    n_rows = math.ceil(num_axes / n_cols)
+    
+    # Create figure
+    fig = plt.figure(figsize=(8, 6))
+    
+    # Calculate basic sizes
+    width = 0.8 / n_cols  # width of each subplot
+    height = 0.8 / n_rows  # height of each subplot
+    gap_x = (1 - (width * n_cols)) / (n_cols + 1)  # horizontal gap
+    gap_y = (1 - (height * n_rows)) / (n_rows + 1)  # vertical gap
+    
+    for i in range(num_axes):
+        row = i // n_cols
+        col = i % n_cols
+        
+        # Special case: Last row has fewer elements than the rest
+        if row == n_rows - 1 and num_axes % n_cols != 0:
+            # Center subplots in the last row
+            extra_cols = num_axes % n_cols
+            col_start = (n_cols - extra_cols) / 2  # offset to center subplots
+            col = i % extra_cols + col_start
+            
+        # Calculate position
+        left = gap_x + (width + gap_x) * col
+        bottom = 1 - gap_y - height - (height + gap_y) * row
+        
+        # Add subplot to the figure
+        ax = fig.add_axes([left, bottom, width, height])
+    return fig
+
 if __name__ == '__main__':
     import pickle
     import matplotlib.pyplot as plt
